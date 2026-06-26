@@ -1,5 +1,0 @@
-selenium
-webdriver-manager
-gspread
-google-auth
-python-dotenv
