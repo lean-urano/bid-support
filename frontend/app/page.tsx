@@ -365,18 +365,37 @@ export default function Home() {
                       <div className="p-6 text-center text-xs text-slate-400">通知はありません</div>
                     ) : (
                       notifications.map(item => (
-                        <div key={item.id} onClick={() => markAsRead(item)} className={`p-3.5 hover:bg-slate-50 transition-colors cursor-pointer flex items-start gap-3 ${!item.read ? "bg-blue-50/40" : ""}`}>
+                        <Link 
+                          key={item.id} 
+                          href={`/notifications/${item.id}`}
+                          onClick={() => {
+                            if (!item.read) {
+                              fetch(`/api/notifications/${item.id}/read`, { method: "PATCH" });
+                            }
+                            setShowNotifications(false);
+                          }} 
+                          className={`p-3.5 hover:bg-slate-50 transition-colors cursor-pointer flex items-start gap-3 block ${!item.read ? "bg-blue-50/40" : ""}`}
+                        >
                           <div className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${!item.read ? "bg-blue-600" : "bg-transparent"}`}></div>
                           <div className="flex-1 space-y-1">
                             <div className="flex items-center justify-between">
                               <span className="text-xs font-bold text-slate-900">{item.title}</span>
-                              <span className="text-[10px] text-slate-400">{item.time}</span>
+                              <span className="text-[10px] text-slate-400">{item.time || "新着"}</span>
                             </div>
-                            <p className="text-xs text-slate-600 leading-relaxed">{item.message}</p>
+                            <p className="text-xs text-slate-600 leading-relaxed line-clamp-2">{item.message}</p>
                           </div>
-                        </div>
+                        </Link>
                       ))
                     )}
+                  </div>
+                  <div className="p-2 bg-slate-50 border-t border-slate-200 text-center">
+                    <Link 
+                      href="/notifications" 
+                      onClick={() => setShowNotifications(false)}
+                      className="text-xs font-bold text-blue-600 hover:underline inline-flex items-center justify-center py-1 w-full"
+                    >
+                      すべての通知を見る →
+                    </Link>
                   </div>
                 </div>
               )}
