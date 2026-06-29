@@ -1,0 +1,21 @@
+// Prisma schema for tender-support
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Notification {
+  id        Int      @id @default(autoincrement())
+  userId    String   // "admin", "user", or "all"
+  title     String
+  message   String
+  type      String   // "ai", "scraping", "system"
+  linkUrl   String?  // Action/Navigation link (e.g. "#tender-1", "tab:scraping")
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
