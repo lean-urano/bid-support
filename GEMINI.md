@@ -8,7 +8,7 @@
 管理者とユーザーの2ロール構成。
 
 ### データソース
-1. **地方公共団体Webサイト** — Playwrightでスクレイピング
+1. **地方公共団体Webサイト** — Playwright (Node.js/TypeScript) でスクレイピング
 2. **NJSS（加入済み）** — CSVダウンロードして定期インポート（NJSSへのスクレイピングは行わない）
 
 ### ユーザー種別
@@ -40,13 +40,13 @@
 | レイヤー | 技術 |
 |---------|------|
 | フロントエンド | Next.js (TypeScript) + shadcn/ui + Tailwind CSS |
-| バックエンド | FastAPI (Python) |
+| バックエンド | Next.js App Router (TypeScript) |
 | データベース | PostgreSQL + pgvector（RAG用ベクトル拡張） |
-| ORM / マイグレーション | SQLAlchemy (async) + Alembic |
-| スクレイピング | Playwright (Python) |
-| AI（生成） | Claude API |
+| ORM / マイグレーション | Prisma / Drizzle ORM |
+| スクレイピング | Playwright (Node.js / TypeScript) |
+| AI（生成） | Claude API / OpenAI API (Node.js SDK) |
 | AI（埋め込み） | OpenAI text-embedding-3-small（次元数: 1536） |
-| インフラ | nginx + Ubuntu VPS |
+| インフラ | Vercel / Node.js + Ubuntu VPS |
 
 ---
 
@@ -54,16 +54,13 @@
 
 ```
 tender-support/
-├── frontend/            # Next.js
-├── backend/             # FastAPI
-│   ├── api/             # ルーター
-│   ├── scraper/         # Playwright スクレイパー
+├── frontend/            # Next.js (App Router / TypeScript フルスタック)
+│   ├── app/             # ページ・API Route (app/api/)
+│   ├── components/      # UIコンポーネント (shadcn/ui + Tailwind)
+│   ├── lib/             # Prismaクライアント, AI/RAGロジック, 共通処理
+│   ├── scraper/         # Playwright (Node.js) スクレイパー
 │   ├── importer/        # NJSS CSV インポーター
-│   ├── models/          # SQLAlchemy モデル
-│   ├── db/              # DB接続（async engine）
-│   ├── rag/             # RAG（ベクトル検索・埋め込み）
-│   ├── alembic/         # マイグレーション
-│   └── main.py          # FastAPI エントリーポイント
+│   └── prisma/          # DBスキーマ & マイグレーション (または drizzle)
 ├── docs/
 │   └── adr/
 └── docker-compose.yml
@@ -88,16 +85,17 @@ tender-support/
 ### マイグレーション実行
 
 ```bash
-cd backend
-alembic upgrade head
+cd frontend
+npx prisma migrate dev
 ```
 
 ---
 
-## 注意事項
+## 注意事項・デザインルール
 
+- UIの実装には**すべて Tailwind CSS と shadcn/ui を使用すること**（UIの統一感を保つため）
+- コンテナの最大幅は **`max-w-7xl` (1280px)** を標準とすること
 - AI秘書の契約書雛形生成には**必ず弁護士確認を促す注意書き**を表示すること
-- shadcn/uiのコンポーネントを使うこと（Tailwind単体はUI統一が難しい）
 - `company_profile` は1レコード固定。複数レコード作成を許容しない
 
 ---
