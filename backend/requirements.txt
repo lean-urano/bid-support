@@ -3,8 +3,8 @@ uvicorn[standard]
 playwright
 asyncpg
 sqlalchemy[asyncio]
+pgvector
 alembic
 python-dotenv
 python-jose[cryptography]
-passlib[bcrypt]
-python-multipart
+bcrypt

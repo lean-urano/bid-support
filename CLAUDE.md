@@ -13,23 +13,23 @@
 
 ### ユーザー種別
 - **管理者** — ユーザー管理、スクレイピング実行、CSVインポート設定など
-- **ユーザー** — 案件の閲覧・検索・お気に入り、業者連絡、AI秘書利用
+- **ユーザー** — 入札案件調査AI、下請け・業者交渉AI、法務・相談AIの利用
 
 ---
 
 ## 機能一覧
 
-### 1. 公共工事案件
+### 1. 入札案件調査AI
 - 案件の検索・一覧表示・詳細表示
 - お気に入り登録
 - AI自動おすすめ度（自社プロフィールと照合して0〜100でスコアリング）
 
-### 2. 業者連絡ツール
+### 2. 下請け・業者交渉AI
 - 業者の検索
-- 連絡補助（文書作成、メール送信など）
+- 連絡・交渉補助（打診文書作成、メール送信など）
 
-### 3. AI秘書
-- **機能1**: 建築に関する専門知識を持つ秘書として全般的な相談をサポート
+### 3. 法務・相談AI
+- **機能1**: 建築に関する専門知識を持つエージェントとして全般的な相談をサポート
 - **機能2**: 契約書雛形生成（必ず弁護士の判断を仰ぐよう注意書きを表示する）
 - 専門知識・判例などをRAGで記憶（pgvectorを使用）
 
@@ -37,16 +37,19 @@
 
 ## 技術スタック
 
+`docs/adr/001-tech-stack.md`で決定済みの構成。以前このセクションは実態と異なる記述（Next.jsフルスタック / Prisma・Drizzle）になっていたため、2026-07-22に実コードに合わせて修正した。
+
 | レイヤー | 技術 |
 |---------|------|
 | フロントエンド | Next.js (TypeScript) + shadcn/ui + Tailwind CSS |
-| バックエンド | Next.js App Router (TypeScript) |
+| バックエンド | FastAPI (Python) |
 | データベース | PostgreSQL + pgvector（RAG用ベクトル拡張） |
-| ORM / マイグレーション | Prisma / Drizzle ORM |
-| スクレイピング | Playwright (Node.js / TypeScript) |
-| AI（生成） | Claude API / OpenAI API (Node.js SDK) |
+| ORM / マイグレーション | SQLAlchemy + Alembic（バックエンド本体）。Next.js側の補助機能（通知など）のみPrisma + SQLiteを個別に使用 |
+| スクレイピング | Playwright (Python) |
+| 認証 | MIRROR SSO（`mirror/sso/idp`、OIDC）。tender-support独自のパスワードログインは廃止済み。詳細は`docs/adr/004-sso-auth.md` |
+| AI（生成） | Claude API / OpenAI API |
 | AI（埋め込み） | OpenAI text-embedding-3-small（次元数: 1536） |
-| インフラ | Vercel / Node.js + Ubuntu VPS |
+| インフラ | nginx + Ubuntu VPS |
 
 ---
 
@@ -54,13 +57,18 @@
 
 ```
 tender-support/
-├── frontend/            # Next.js (App Router / TypeScript フルスタック)
-│   ├── app/             # ページ・API Route (app/api/)
-│   ├── components/      # UIコンポーネント (shadcn/ui + Tailwind)
-│   ├── lib/             # Prismaクライアント, AI/RAGロジック, 共通処理
-│   ├── scraper/         # Playwright (Node.js) スクレイパー
-│   ├── importer/        # NJSS CSV インポーター
-│   └── prisma/          # DBスキーマ & マイグレーション (または drizzle)
+├── backend/              # FastAPI (Python) — users/tenders等の中核ドメインAPI
+│   ├── api/              # ルーター (auth.py など)
+│   ├── models/           # SQLAlchemyモデル
+│   ├── db/                # DBセッション設定
+│   ├── alembic/          # マイグレーション
+│   ├── scraper/          # Playwright (Python) スクレイパー
+│   └── importer/         # NJSS CSV インポーター
+├── frontend/             # Next.js (App Router / TypeScript)
+│   ├── app/              # ページ・API Route (app/api/) — 認証(SSO)や通知など補助機能
+│   ├── components/       # UIコンポーネント (shadcn/ui + Tailwind)
+│   ├── lib/              # 認証セッション処理、AI/RAGロジック、共通処理
+│   └── prisma/           # Next.js側の補助機能用スキーマ (SQLite。中核ドメインとは別管理)
 ├── docs/
 │   └── adr/
 └── docker-compose.yml
@@ -85,6 +93,11 @@ tender-support/
 ### マイグレーション実行
 
 ```bash
+# 中核ドメイン (users/tenders等、Postgres)
+cd backend
+alembic upgrade head
+
+# Next.js側の補助機能 (通知など、SQLite)
 cd frontend
 npx prisma migrate dev
 ```
@@ -95,7 +108,7 @@ npx prisma migrate dev
 
 - UIの実装には**すべて Tailwind CSS と shadcn/ui を使用すること**（UIの統一感を保つため）
 - コンテナの最大幅は **`max-w-7xl` (1280px)** を標準とすること
-- AI秘書の契約書雛形生成には**必ず弁護士確認を促す注意書き**を表示すること
+- 法務・相談AIの契約書雛形生成には**必ず弁護士確認を促す注意書き**を表示すること
 - `company_profile` は1レコード固定。複数レコード作成を許容しない
 
 ---
@@ -105,3 +118,4 @@ npx prisma migrate dev
 - [001 - 技術スタック選定](docs/adr/001-tech-stack.md)
 - [002 - RAG設計](docs/adr/002-rag.md)
 - [003 - DBスキーマ設計](docs/adr/003-database-schema.md)
+- [004 - 認証をMIRROR SSO(OIDC)に統一](docs/adr/004-sso-auth.md)
