@@ -61,7 +61,7 @@ export default function LoginPage() {
           <Building2 className="w-6 h-6" />
         </div>
         <h2 className="text-2xl font-extrabold text-slate-900 tracking-tight">
-          tender-support にログイン
+          公共工事サポートにログイン
         </h2>
         <p className="mt-1 text-sm text-slate-600">
           建設業者向け 入札・交渉・法務AI支援システム
@@ -92,13 +92,13 @@ export default function LoginPage() {
                 onClick={startTenderSupportSession}
                 className="mt-6 w-full flex justify-center items-center gap-2 py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 transition-all cursor-pointer"
               >
-                tender-supportに入る
+                公共工事サポートに入る
               </button>
             </>
           ) : (
             <>
               <p className="text-sm text-slate-600 leading-6">
-                MIRRORアカウントを使って、tender-supportへ安全にログインできます。
+                MIRRORアカウントを使って、公共工事サポートへ安全にログインできます。
               </p>
               <button
                 type="button"

@@ -134,7 +134,7 @@ export default function Header() {
     : [
         { href: "/tenders",       icon: <Search className="w-5 h-5" />,    label: "案件調査AI",   sub: "Tender AI" },
         { href: "/contractors",   icon: <UserCheck className="w-5 h-5" />, label: "交渉AI",       sub: "Negotiation AI" },
-        { href: "/ai-assistant",  icon: <Bot className="w-5 h-5" />,       label: "法務・相談AI", sub: "Legal AI" },
+        { href: "/ai-assistant",  icon: <Bot className="w-5 h-5" />,       label: "秘書AI",       sub: "Secretary AI" },
       ];
 
   return (
@@ -147,14 +147,12 @@ export default function Header() {
               <Building2 className="w-5 h-5" />
             </div>
             <span className="font-bold text-xl tracking-tight text-slate-900 flex items-center gap-1.5">
-              tender-support 
+              公共工事サポート
               {isAdmin ? (
                 <span className="hidden min-[500px]:flex text-xs font-bold px-2 py-0.5 bg-indigo-100 text-indigo-700 rounded-full border border-indigo-200 items-center gap-1">
                   <ShieldCheck className="w-3 h-3" /> 管理者コンソール
                 </span>
-              ) : (
-                <span className="hidden min-[500px]:inline text-xs font-semibold px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full">建設入札支援</span>
-              )}
+              ) : null}
             </span>
           </Link>
         </div>

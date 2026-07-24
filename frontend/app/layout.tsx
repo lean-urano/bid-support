@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "tender-support | 入札支援システム",
+  title: "公共工事サポート | 入札支援システム",
   description: "建設業者向け入札情報ダッシュボード",
 };
 

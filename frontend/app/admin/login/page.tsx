@@ -41,7 +41,7 @@ export default function AdminLoginPage() {
         <h2 className="text-2xl font-extrabold text-slate-900 tracking-tight flex items-center justify-center gap-1.5">
           <ShieldCheck className="w-5 h-5 text-indigo-600" /> 管理者ログイン
         </h2>
-        <p className="mt-1 text-sm text-slate-600">tender-support 管理者コンソール</p>
+        <p className="mt-1 text-sm text-slate-600">公共工事サポート 管理者コンソール</p>
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">

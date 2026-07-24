@@ -93,7 +93,7 @@ export default function NotificationDetailPage({ params }: { params: Promise<{ i
             <div className="p-2 bg-blue-600 rounded-lg text-white">
               <Bell className="w-5 h-5" />
             </div>
-            <span>tender-support</span>
+            <span>公共工事サポート</span>
             <span className="text-xs font-semibold px-2 py-0.5 bg-slate-100 text-slate-600 rounded-full">通知センター</span>
           </Link>
 

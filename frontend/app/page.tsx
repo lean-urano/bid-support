@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { 
   Building2, 
   Bot, 
@@ -42,7 +43,7 @@ export default function Home() {
                   管理者ダッシュボード
                 </h1>
                 <p className="text-slate-300 text-sm sm:text-base leading-relaxed">
-                  入札案件マスターの自動スクレイピング、協力業者リスト管理、および法務・相談AIが参照するRAG知識の学習を一括コントロールします。
+                  入札案件マスターの自動スクレイピング、協力業者リスト管理、および秘書AIが参照するRAG知識の学習を一括コントロールします。
                 </p>
               </div>
             </section>
@@ -53,7 +54,9 @@ export default function Home() {
                 管理メニュー
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <Link href="/tenders" className="bg-white p-6 rounded-xl border border-slate-200 shadow-xs hover:border-indigo-300 hover:shadow-md transition-all flex flex-col justify-between group">
+                <Link href="/tenders" className="bg-white overflow-hidden rounded-xl border border-slate-200 shadow-xs hover:border-indigo-300 hover:shadow-md transition-all flex flex-col justify-between group">
+                  <FeatureThumbnail src="/images/features/tender-research-ai.png" alt="入札案件を調査するAIのイメージ" />
+                  <div className="p-6 pt-5 flex flex-1 flex-col justify-between">
                   <div className="space-y-3">
                     <div className="w-10 h-10 bg-indigo-50 text-indigo-700 rounded-lg flex items-center justify-center font-bold">
                       <Search className="w-5 h-5" />
@@ -66,35 +69,42 @@ export default function Home() {
                   <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between text-sm font-semibold text-indigo-600">
                     入札案件調査AI管理を開く <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                   </div>
+                  </div>
                 </Link>
 
-                <Link href="/contractors" className="bg-white p-6 rounded-xl border border-slate-200 shadow-xs hover:border-indigo-300 hover:shadow-md transition-all flex flex-col justify-between group">
+                <Link href="/contractors" className="bg-white overflow-hidden rounded-xl border border-slate-200 shadow-xs hover:border-amber-300 hover:shadow-md transition-all flex flex-col justify-between group">
+                  <FeatureThumbnail src="/images/features/contractor-negotiation-online-ai.png" alt="オンライン業者検索・交渉を支援するAIのイメージ" />
+                  <div className="p-6 pt-5 flex flex-1 flex-col justify-between">
                   <div className="space-y-3">
-                    <div className="w-10 h-10 bg-indigo-50 text-indigo-700 rounded-lg flex items-center justify-center font-bold">
+                    <div className="w-10 h-10 bg-amber-50 text-amber-700 rounded-lg flex items-center justify-center font-bold">
                       <UserCheck className="w-5 h-5" />
                     </div>
-                    <h3 className="font-bold text-lg text-slate-900 group-hover:text-indigo-600 transition-colors">2. 下請け・業者交渉AI管理</h3>
+                    <h3 className="font-bold text-lg text-slate-900 group-hover:text-amber-600 transition-colors">2. 下請け・業者交渉AI管理</h3>
                     <p className="text-sm text-slate-600 leading-relaxed">
                       業者情報の自動収集、業者マスターの追加・編集、および交渉打診自動マッチング用AI知識の登録管理を行います。
                     </p>
                   </div>
-                  <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between text-sm font-semibold text-indigo-600">
+                  <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between text-sm font-semibold text-amber-700">
                     下請け・業者交渉AI管理を開く <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  </div>
                   </div>
                 </Link>
 
-                <Link href="/ai-assistant" className="bg-white p-6 rounded-xl border border-slate-200 shadow-xs hover:border-indigo-300 hover:shadow-md transition-all flex flex-col justify-between group">
+                <Link href="/ai-assistant" className="bg-white overflow-hidden rounded-xl border border-slate-200 shadow-xs hover:border-indigo-300 hover:shadow-md transition-all flex flex-col justify-between group">
+                  <FeatureThumbnail src="/images/features/legal-consultation-ai.png" alt="秘書AIのイメージ" />
+                  <div className="p-6 pt-5 flex flex-1 flex-col justify-between">
                   <div className="space-y-3">
                     <div className="w-10 h-10 bg-indigo-50 text-indigo-700 rounded-lg flex items-center justify-center font-bold">
                       <Bot className="w-5 h-5" />
                     </div>
-                    <h3 className="font-bold text-lg text-slate-900 group-hover:text-indigo-600 transition-colors">3. 法務・相談AI管理</h3>
+                    <h3 className="font-bold text-lg text-slate-900 group-hover:text-indigo-600 transition-colors">3. 秘書AI管理</h3>
                     <p className="text-sm text-slate-600 leading-relaxed">
-                      法務・相談AIが回答および契約雛形生成で参照する仕様基準、過去判例、各種約款などの学習(RAG)登録管理を行います。
+                      秘書AIが回答および契約雛形生成で参照する仕様基準、過去判例、各種約款などの学習(RAG)登録管理を行います。
                     </p>
                   </div>
                   <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between text-sm font-semibold text-indigo-600">
-                    法務・相談AI管理を開く <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                    秘書AI管理を開く <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  </div>
                   </div>
                 </Link>
               </div>
@@ -126,10 +136,12 @@ export default function Home() {
             {/* 主要機能 */}
             <section className="space-y-4">
               <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
-                主要機能
+                ３つの機能
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <Link href="/tenders" className="bg-white p-6 rounded-xl border border-slate-200 shadow-xs hover:border-blue-300 hover:shadow-md transition-all flex flex-col justify-between group">
+                <Link href="/tenders" className="bg-white overflow-hidden rounded-xl border border-slate-200 shadow-xs hover:border-blue-300 hover:shadow-md transition-all flex flex-col justify-between group">
+                  <FeatureThumbnail src="/images/features/tender-research-ai.png" alt="入札案件を調査するAIのイメージ" />
+                  <div className="p-6 pt-5 flex flex-1 flex-col justify-between">
                   <div className="space-y-3">
                     <div className="w-10 h-10 bg-blue-100 text-blue-700 rounded-lg flex items-center justify-center font-bold">
                       <Search className="w-5 h-5" />
@@ -142,35 +154,42 @@ export default function Home() {
                   <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between text-sm font-semibold text-blue-600">
                     案件調査を開始する <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                   </div>
+                  </div>
                 </Link>
 
-                <Link href="/contractors" className="bg-white p-6 rounded-xl border border-slate-200 shadow-xs hover:border-blue-300 hover:shadow-md transition-all flex flex-col justify-between group">
+                <Link href="/contractors" className="bg-white overflow-hidden rounded-xl border border-slate-200 shadow-xs hover:border-amber-300 hover:shadow-md transition-all flex flex-col justify-between group">
+                  <FeatureThumbnail src="/images/features/contractor-negotiation-online-ai.png" alt="オンライン業者検索・交渉を支援するAIのイメージ" />
+                  <div className="p-6 pt-5 flex flex-1 flex-col justify-between">
                   <div className="space-y-3">
-                    <div className="w-10 h-10 bg-indigo-100 text-indigo-700 rounded-lg flex items-center justify-center font-bold">
+                    <div className="w-10 h-10 bg-amber-100 text-amber-700 rounded-lg flex items-center justify-center font-bold">
                       <UserCheck className="w-5 h-5" />
                     </div>
-                    <h3 className="font-bold text-lg text-slate-900 group-hover:text-indigo-600 transition-colors">下請け・業者交渉AI</h3>
+                    <h3 className="font-bold text-lg text-slate-900 group-hover:text-amber-600 transition-colors">下請け・業者交渉AI</h3>
                     <p className="text-sm text-slate-600 leading-relaxed">
                       協力業者・下請業者の検索および交渉連絡補助。AIによる最適な打診交渉文書の自動作成やメール送信をサポート。
                     </p>
                   </div>
-                  <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between text-sm font-semibold text-indigo-600">
+                  <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between text-sm font-semibold text-amber-700">
                     業者交渉を開始する <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  </div>
                   </div>
                 </Link>
 
-                <Link href="/ai-assistant" className="bg-white p-6 rounded-xl border border-slate-200 shadow-xs hover:border-blue-300 hover:shadow-md transition-all flex flex-col justify-between group">
+                <Link href="/ai-assistant" className="bg-white overflow-hidden rounded-xl border border-slate-200 shadow-xs hover:border-blue-300 hover:shadow-md transition-all flex flex-col justify-between group">
+                  <FeatureThumbnail src="/images/features/legal-consultation-ai.png" alt="秘書AIのイメージ" />
+                  <div className="p-6 pt-5 flex flex-1 flex-col justify-between">
                   <div className="space-y-3">
                     <div className="w-10 h-10 bg-emerald-100 text-emerald-700 rounded-lg flex items-center justify-center font-bold">
                       <Bot className="w-5 h-5" />
                     </div>
-                    <h3 className="font-bold text-lg text-slate-900 group-hover:text-blue-600 transition-colors">法務・相談AI</h3>
+                    <h3 className="font-bold text-lg text-slate-900 group-hover:text-blue-600 transition-colors">秘書AI</h3>
                     <p className="text-sm text-slate-600 leading-relaxed">
                       建築専門知識RAGナレッジ相談および契約書雛形作成。※生成された法務書類は弁護士の最終確認が必須です。
                     </p>
                   </div>
                   <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between text-sm font-semibold text-emerald-600">
-                    法務・相談AIに相談する <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                    秘書AIに相談する <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  </div>
                   </div>
                 </Link>
               </div>
@@ -178,6 +197,20 @@ export default function Home() {
           </div>
         )}
       </main>
+    </div>
+  );
+}
+
+function FeatureThumbnail({ src, alt }: { src: string; alt: string }) {
+  return (
+    <div className="relative aspect-video overflow-hidden bg-slate-100">
+      <Image
+        src={src}
+        alt={alt}
+        fill
+        sizes="(min-width: 768px) 33vw, 100vw"
+        className="object-cover transition-transform duration-500 group-hover:scale-105"
+      />
     </div>
   );
 }

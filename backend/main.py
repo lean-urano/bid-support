@@ -4,7 +4,7 @@ import os
 
 from api.auth import router as auth_router
 
-app = FastAPI(title="tender-support API")
+app = FastAPI(title="公共工事サポート API")
 
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
 

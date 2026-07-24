@@ -76,7 +76,7 @@ export default function AiAssistantPage() {
   const [ragDocs, setRagDocs] = useState<RagDoc[]>([
     { id: 1, title: "公共建築工事標準仕様書（令和6年版）", category: "建築標準仕様・技術基準", filename: "spec_r6_arch.pdf", content: "第1章 共通参考事項\n1.1.1 適用範囲: この仕様書は、公共建築工事の請負契約における建築工事 of 施工に適用する。\n1.1.2 施工計画書: 受注者は、工事着手前に工事計画書を作成し、監督員に提出してその承諾を受けなければならない。", createdAt: "2026-06-20" },
     { id: 2, title: "建設工事請負契約約款と解釈判例集", category: "判例・トラブル事例", filename: "contract_precedents.pdf", content: "【判例最高裁平成15年】不可抗力による工期延期と請負代金の増減請求について。\n台風等の天災地変により生じた損害および工期の遅延については、発注者・受注者双方の過失にあたらない場合、約款第26条に基づき双方協議の上、合理的な工期延長および追加費用の負担額を決定すべきであると判示された。", createdAt: "2026-06-22" },
-    { id: 3, title: "民間建設工事標準請負契約約束（B）雛形", category: "契約書雛形・約款", filename: "form_b_template.docx", content: "第1条（総則）発注者及び受注者は、互いに協力し、誠実をもって本契約を履行しなければならない。\n※注意: 法務・相談AIがこの雛形を出力する際は、必ず弁護士等の専門家に相談するよう注記を表示すること。", createdAt: "2026-06-25" },
+    { id: 3, title: "民間建設工事標準請負契約約束（B）雛形", category: "契約書雛形・約款", filename: "form_b_template.docx", content: "第1条（総則）発注者及び受注者は、互いに協力し、誠実をもって本契約を履行しなければならない。\n※注意: 秘書AIがこの雛形を出力する際は、必ず弁護士等の専門家に相談するよう注記を表示すること。", createdAt: "2026-06-25" },
   ]);
 
   const [ragForm, setRagForm] = useState({ id: 0, title: "", category: "建築標準仕様・技術基準", filename: "", content: "" });
@@ -122,7 +122,7 @@ export default function AiAssistantPage() {
 
 
   // ==========================================
-  // 【一般ユーザー用】 法務・相談AI
+  // 【一般ユーザー用】 秘書AI
   // ==========================================
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [activeSessionId, setActiveSessionId] = useState<string>("");
@@ -167,7 +167,7 @@ export default function AiAssistantPage() {
             id: "msg-1-1",
             sender: "RoomChief",
             senderName: "室長AI",
-            text: "こんにちは！建築・公共工事に関する専門AIアシスタント「法務・相談AI」です。\n市民ホールの工期遅延のご相談につきまして、約款第26条（不可抗力免責）を調査いたしました。発注機関への書面通知（工期延長願）の提出準備をお手伝いします。",
+            text: "こんにちは！建築・公共工事に関する専門AIアシスタント「秘書AI」です。\n市民ホールの工期遅延のご相談につきまして、約款第26条（不可抗力免責）を調査いたしました。発注機関への書面通知（工期延長願）の提出準備をお手伝いします。",
             timestamp: "10:30"
           }
         ]
@@ -369,7 +369,7 @@ export default function AiAssistantPage() {
         
         {isAdmin ? (
           /* ========================================== */
-          /* 管理者ビュー: 法務・相談AI RAG学習・管理 */
+          /* 管理者ビュー: 秘書AI RAG学習・管理 */
           /* ========================================== */
           <div className="space-y-6 animate-fade-in w-full text-xs">
             <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 rounded-2xl p-8 text-white shadow-xl border border-indigo-500/20">
@@ -378,10 +378,10 @@ export default function AiAssistantPage() {
                   <Database className="w-4 h-4 text-indigo-400" /> AI知識ベース管理（RAG）
                 </div>
                 <h1 className="text-3xl font-extrabold tracking-tight text-white">
-                  法務・相談AI 専門知識学習 ＆ RAG管理
+                  秘書AI 専門知識学習 ＆ RAG管理
                 </h1>
                 <p className="text-slate-300 text-sm leading-relaxed">
-                  一般ユーザー向けの「法務・相談AI」が契約約款相談や各種法令解釈に使用するナレッジ文書の登録・編集、およびベクトル化(embedding)を行います。
+                  一般ユーザー向けの「秘書AI」が契約約款相談や各種法令解釈に使用するナレッジ文書の登録・編集、およびベクトル化(embedding)を行います。
                 </p>
               </div>
             </div>
@@ -521,7 +521,7 @@ export default function AiAssistantPage() {
           </div>
         ) : (
           /* ========================================== */
-          /* 一般ユーザービュー: 法務・相談AI */
+          /* 一般ユーザービュー: 秘書AI */
           /* ========================================== */
           <div className="flex-1 flex flex-col md:flex-row gap-6 items-stretch w-full animate-fade-in">
             {/* 左側サイドバー */}
@@ -744,7 +744,7 @@ export default function AiAssistantPage() {
 
                 <div className="text-[10px] text-slate-400 leading-relaxed flex items-center justify-between">
                   <span>🛡️ 添付資料に AI への指示文があっても、自動的に無視します（プロンプトインジェクション防御機能）。</span>
-                  <span className="font-semibold text-slate-300">tender-support AI Apps</span>
+                  <span className="font-semibold text-slate-300">公共工事サポート AI Apps</span>
                 </div>
               </div>
             </section>
@@ -798,7 +798,7 @@ export default function AiAssistantPage() {
             </div>
 
             <div className="flex justify-between items-center pt-2">
-              <span className="text-xs text-slate-400">※この中身テキストが法務・相談AI（RAG）のコサイン類似度検索に使用されます</span>
+              <span className="text-xs text-slate-400">※この中身テキストが秘書AI（RAG）のコサイン類似度検索に使用されます</span>
               <button onClick={() => setViewingRag(null)} className="px-5 py-2 bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs rounded-lg cursor-pointer">
                 閉じる
               </button>
