@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { oidcStateCookieName, oidcVerifierCookieName, returnToCookieName, safeReturnTo, secureCookie } from "@/lib/auth";
+import { authCookieOptions, oidcStateCookieName, oidcVerifierCookieName, returnToCookieName, safeReturnTo } from "@/lib/auth";
 import { client, getOidcConfiguration, redirectUri } from "@/lib/oidc";
 
 export const runtime = "nodejs";
@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
     state,
   });
   const response = NextResponse.redirect(authorizationUrl);
-  const cookieOptions = { httpOnly: true, sameSite: "lax" as const, secure: secureCookie, path: "/", maxAge: 10 * 60 };
+  const cookieOptions = { ...authCookieOptions, maxAge: 10 * 60 };
   response.cookies.set(oidcStateCookieName, state, cookieOptions);
   response.cookies.set(oidcVerifierCookieName, codeVerifier, cookieOptions);
   response.cookies.set(returnToCookieName, safeReturnTo(request.nextUrl.searchParams.get("returnTo")), cookieOptions);

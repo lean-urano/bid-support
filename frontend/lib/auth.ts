@@ -1,10 +1,11 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
 
-export const sessionCookieName = "tender_support_session";
-export const oidcStateCookieName = "tender_support_oidc_state";
-export const oidcVerifierCookieName = "tender_support_oidc_verifier";
-export const returnToCookieName = "tender_support_return_to";
+// 既存の非Partitioned Cookieと衝突させず、再ログインでCHIPSへ移行する。
+export const sessionCookieName = "tender_support_session_chips";
+export const oidcStateCookieName = "tender_support_oidc_state_chips";
+export const oidcVerifierCookieName = "tender_support_oidc_verifier_chips";
+export const returnToCookieName = "tender_support_return_to_chips";
 
 export interface UserSession {
   sub: string;
@@ -60,6 +61,12 @@ export function safeReturnTo(value: string | null) {
 }
 
 export const secureCookie = process.env.NODE_ENV === "production";
+
+// Partitioned は Secure 必須。HTTP のローカル開発ではCookieを保存できなくなるため、
+// 本番HTTPSのみCHIPSを有効にする。SameSite=Noneでも同一サイト要求は送信される。
+export const authCookieOptions = secureCookie
+  ? { httpOnly: true, sameSite: "none" as const, secure: true, partitioned: true, path: "/" }
+  : { httpOnly: true, sameSite: "lax" as const, secure: false, path: "/" };
 
 // request.urlはNext.jsがNodeの生のreq.url(パスのみ)からoriginを補完する際、
 // リバースプロキシ配下だとlocalhost:<内部ポート>を使ってしまうことがあるため、

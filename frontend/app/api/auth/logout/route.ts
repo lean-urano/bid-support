@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { appOrigin, getSession, secureCookie, sessionCookieName } from "@/lib/auth";
+import { appOrigin, authCookieOptions, getSession, sessionCookieName } from "@/lib/auth";
 
 export async function GET() {
   const session = await getSession();
@@ -13,6 +13,6 @@ export async function GET() {
         logoutUrl.searchParams.set("return_to", tenderSupportLoginUrl);
         return NextResponse.redirect(logoutUrl);
       })();
-  response.cookies.set(sessionCookieName, "", { httpOnly: true, sameSite: "lax", secure: secureCookie, path: "/", maxAge: 0 });
+  response.cookies.set(sessionCookieName, "", { ...authCookieOptions, maxAge: 0 });
   return response;
 }

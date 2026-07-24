@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { appOrigin, createSessionToken, oidcStateCookieName, oidcVerifierCookieName, returnToCookieName, secureCookie, sessionCookieName } from "@/lib/auth";
+import { appOrigin, authCookieOptions, createSessionToken, oidcStateCookieName, oidcVerifierCookieName, returnToCookieName, sessionCookieName } from "@/lib/auth";
 import { client, getOidcConfiguration } from "@/lib/oidc";
 
 export const runtime = "nodejs";
@@ -44,15 +44,12 @@ export async function GET(request: NextRequest) {
     const sessionToken = createSessionToken({ sub: claims.sub, name: synced.name, email, role: synced.role });
     const response = NextResponse.redirect(new URL(returnTo, appOrigin));
     response.cookies.set(sessionCookieName, sessionToken, {
-      httpOnly: true,
-      sameSite: "lax",
-      secure: secureCookie,
-      path: "/",
+      ...authCookieOptions,
       maxAge: 8 * 60 * 60,
     });
-    response.cookies.delete(oidcStateCookieName);
-    response.cookies.delete(oidcVerifierCookieName);
-    response.cookies.delete(returnToCookieName);
+    response.cookies.set(oidcStateCookieName, "", { ...authCookieOptions, maxAge: 0 });
+    response.cookies.set(oidcVerifierCookieName, "", { ...authCookieOptions, maxAge: 0 });
+    response.cookies.set(returnToCookieName, "", { ...authCookieOptions, maxAge: 0 });
     return response;
   } catch {
     return NextResponse.redirect(new URL("/api/auth/login?error=callback", appOrigin));

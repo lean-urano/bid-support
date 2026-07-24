@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createSessionToken, secureCookie, sessionCookieName } from "@/lib/auth";
+import { authCookieOptions, createSessionToken, sessionCookieName } from "@/lib/auth";
 
 export const runtime = "nodejs";
 
@@ -21,10 +21,7 @@ export async function POST(request: NextRequest) {
   const sessionToken = createSessionToken({ sub: `admin:${email}`, name: data.name, email, role: data.role });
   const response = NextResponse.json({ ok: true });
   response.cookies.set(sessionCookieName, sessionToken, {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: secureCookie,
-    path: "/",
+    ...authCookieOptions,
     maxAge: 8 * 60 * 60,
   });
   return response;
