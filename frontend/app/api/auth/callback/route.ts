@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createSessionToken, oidcStateCookieName, oidcVerifierCookieName, returnToCookieName, secureCookie, sessionCookieName } from "@/lib/auth";
+import { appOrigin, createSessionToken, oidcStateCookieName, oidcVerifierCookieName, returnToCookieName, secureCookie, sessionCookieName } from "@/lib/auth";
 import { client, getOidcConfiguration } from "@/lib/oidc";
 
 export const runtime = "nodejs";
@@ -17,11 +17,13 @@ export async function GET(request: NextRequest) {
   const state = request.cookies.get(oidcStateCookieName)?.value;
   const codeVerifier = request.cookies.get(oidcVerifierCookieName)?.value;
   const returnTo = request.cookies.get(returnToCookieName)?.value ?? "/";
-  if (!state || !codeVerifier) return NextResponse.redirect(new URL("/api/auth/login", request.url));
+  if (!state || !codeVerifier) return NextResponse.redirect(new URL("/api/auth/login", appOrigin));
 
   try {
     const configuration = await getOidcConfiguration();
-    const tokens = await client.authorizationCodeGrant(configuration, new URL(request.url), {
+    // request.urlはリバースプロキシ配下だとlocalhost:<内部ポート>ベースになることがあるため、
+    // パス+クエリはrequest.nextUrlから取り、originは常にappOriginを使う。
+    const tokens = await client.authorizationCodeGrant(configuration, new URL(request.nextUrl.pathname + request.nextUrl.search, appOrigin), {
       pkceCodeVerifier: codeVerifier,
       expectedState: state,
     });
@@ -40,7 +42,7 @@ export async function GET(request: NextRequest) {
     const synced: { role: "user" | "admin"; name: string } = await syncRes.json();
 
     const sessionToken = createSessionToken({ sub: claims.sub, name: synced.name, email, role: synced.role });
-    const response = NextResponse.redirect(new URL(returnTo, request.url));
+    const response = NextResponse.redirect(new URL(returnTo, appOrigin));
     response.cookies.set(sessionCookieName, sessionToken, {
       httpOnly: true,
       sameSite: "lax",
@@ -53,6 +55,6 @@ export async function GET(request: NextRequest) {
     response.cookies.delete(returnToCookieName);
     return response;
   } catch {
-    return NextResponse.redirect(new URL("/api/auth/login?error=callback", request.url));
+    return NextResponse.redirect(new URL("/api/auth/login?error=callback", appOrigin));
   }
 }

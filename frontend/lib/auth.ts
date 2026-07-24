@@ -60,3 +60,8 @@ export function safeReturnTo(value: string | null) {
 }
 
 export const secureCookie = process.env.NODE_ENV === "production";
+
+// request.urlはNext.jsがNodeの生のreq.url(パスのみ)からoriginを補完する際、
+// リバースプロキシ配下だとlocalhost:<内部ポート>を使ってしまうことがあるため、
+// 絶対URLを組み立てる際は必ずこちら(OIDC_REDIRECT_URIから導出した正しいorigin)を使うこと。
+export const appOrigin = new URL(process.env.OIDC_REDIRECT_URI ?? "http://localhost:4325/api/auth/callback").origin;
