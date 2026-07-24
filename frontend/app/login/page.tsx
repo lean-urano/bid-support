@@ -23,10 +23,12 @@ export default function LoginPage() {
     try {
       const response = await fetch(`${mirrorSsoUrl}/api/session`, { credentials: "include" });
       const data: { authenticated?: boolean; user?: MirrorUser } = await response.json();
+      console.log("[DEBUG checkMirrorSession]", { status: response.status, data, closeModalWhenAuthenticated });
       const authenticatedUser = data.authenticated && data.user ? data.user : null;
       setUser(authenticatedUser);
       if (authenticatedUser && closeModalWhenAuthenticated) setModalOpen(false);
-    } catch {
+    } catch (err) {
+      console.log("[DEBUG checkMirrorSession] error", err);
       setUser(null);
     } finally {
       setChecking(false);
@@ -37,6 +39,7 @@ export default function LoginPage() {
     const sessionTimer = window.setTimeout(() => { void checkMirrorSession(); }, 0);
 
     const onMessage = (event: MessageEvent<{ type?: string }>) => {
+      console.log("[DEBUG onMessage]", { origin: event.origin, expected: new URL(mirrorSsoUrl).origin, data: event.data });
       if (event.origin !== new URL(mirrorSsoUrl).origin || event.data?.type !== "mirror-authenticated") return;
       setModalOpen(false);
       void checkMirrorSession();
