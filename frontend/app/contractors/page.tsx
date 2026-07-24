@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { 
   Building2, 
@@ -12,9 +12,7 @@ import {
   Check, 
   ArrowRight, 
   ChevronRight, 
-  UploadCloud, 
   FileText, 
-  Trash2, 
   Plus, 
   MapPin, 
   Briefcase, 
@@ -22,7 +20,6 @@ import {
   Mail, 
   Send, 
   Loader2, 
-  Paperclip, 
   ArrowLeft, 
   PlusCircle, 
   Edit,
@@ -53,6 +50,28 @@ type ContractorRag = {
   category: string;
   filename: string;
   content: string;
+};
+
+type SelectedTender = {
+  id: number;
+  title: string;
+  agency: string;
+  location: string;
+  openDate: string;
+  budget?: string;
+  description?: string;
+  categoryTag?: string;
+};
+
+const DEFAULT_SELECTED_TENDER: SelectedTender = {
+  id: 1,
+  title: "○○市民ホール大規模改修建築工事",
+  agency: "○○市 建築課",
+  location: "東京都○○市",
+  openDate: "2026-07-15",
+  budget: "480,000,000円",
+  description: "RC造地上3階地下1階、延床面積4,500㎡の大規模改修。空調・衛生設備含む一括発注。同規模の公共施設改修実績が必要。",
+  categoryTag: "建築一式・大規模改修",
 };
 
 export default function ContractorsPage() {
@@ -210,10 +229,18 @@ export default function ContractorsPage() {
   // ==========================================
   const [step, setStep] = useState<1 | 2 | 3 | 4 | "result">(1);
 
-  // 入力フォームの状態管理
-  const [uploadedFiles, setUploadedFiles] = useState<{ name: string; size: string; type: string }[]>([]);
-  const [conditionText, setConditionText] = useState("");
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  // 案件調査AIで選択された案件を受け取る
+  const [selectedTender, setSelectedTender] = useState<SelectedTender>(DEFAULT_SELECTED_TENDER);
+
+  useEffect(() => {
+    const savedTender = window.sessionStorage.getItem("selectedTenderForNegotiation");
+    if (!savedTender) return;
+    try {
+      setSelectedTender(JSON.parse(savedTender) as SelectedTender);
+    } catch {
+      window.sessionStorage.removeItem("selectedTenderForNegotiation");
+    }
+  }, []);
 
   const [searchRegion, setSearchRegion] = useState("すべて");
   const [searchSpecialty, setSearchSpecialty] = useState("すべて");
@@ -228,40 +255,6 @@ export default function ContractorsPage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedDrafts, setGeneratedDrafts] = useState<Record<string | number, string>>({});
   const [activeDraftTab, setActiveDraftTab] = useState<string | number>("");
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      const filesArr = Array.from(e.target.files).map(f => ({
-        name: f.name,
-        size: (f.size / (1024 * 1024)).toFixed(2) + " MB",
-        type: f.type || "unknown"
-      }));
-      setUploadedFiles(prev => [...prev, ...filesArr]);
-      triggerToast(`${filesArr.length}個のファイルを追加しました`);
-    }
-  };
-
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    if (e.dataTransfer.files) {
-      const filesArr = Array.from(e.dataTransfer.files).map(f => ({
-        name: f.name,
-        size: (f.size / (1024 * 1024)).toFixed(2) + " MB",
-        type: f.type || "unknown"
-      }));
-      setUploadedFiles(prev => [...prev, ...filesArr]);
-      triggerToast(`${filesArr.length}個のファイルをドロップしました`);
-    }
-  };
-
-  const removeFile = (index: number) => {
-    setUploadedFiles(prev => prev.filter((_, i) => i !== index));
-    triggerToast("ファイルを削除しました");
-  };
 
   const filteredContractors = contractors.filter(c => {
     const matchesRegion = searchRegion === "すべて" || c.address.includes(searchRegion);
@@ -326,13 +319,9 @@ export default function ContractorsPage() {
       const drafts: Record<string | number, string> = {};
 
       selectedContractors.forEach(contractor => {
-        const condBrief = conditionText.trim() 
-          ? `【ご提示案件条件】\n${conditionText.trim()}\n` 
-          : "新築・改修工事の協力業者募集について\n";
-        
-        const filesBrief = uploadedFiles.length > 0 
-          ? `※本連絡に併せて、仕様書・図面等の資料（計${uploadedFiles.length}件: ${uploadedFiles.map(f => f.name).join(", ")}）を添付しております。\n`
-          : "";
+        const tenderBrief = selectedTender
+          ? `【対象案件】\n案件名：${selectedTender.title}\n発注機関：${selectedTender.agency}\n対象地域：${selectedTender.location}\n予定価格：${selectedTender.budget || "未定"}\n工事概要：${selectedTender.description || "詳細情報はありません。"}\n`
+          : "【対象案件】\n案件調査AIから選択された公共工事案件について\n";
 
         let purposeText = "";
         if (purposeEstimate && purposeDrawing) {
@@ -354,8 +343,8 @@ export default function ContractorsPage() {
 
 貴社の実績や得意分野（${contractor.specialties.join(", ")}）を拝見し、弊社が現在入札を進めております案件について、ぜひご相談・打診をさせていただきたくご連絡差し上げました。
 
-${condBrief}
-${filesBrief}${freeTextBrief}
+${tenderBrief}
+${freeTextBrief}
 ${purposeText}
 
 何卒ご検討のほど、よろしくお願い申し上げます。
@@ -672,7 +661,7 @@ URL: https://tender-construction.co.jp
                     ></div>
 
                     {[
-                      { s: 1, label: "条件入力" },
+                      { s: 1, label: "選択案件" },
                       { s: 2, label: "業者検索" },
                       { s: 3, label: "問い合わせ目的" },
                       { s: 4, label: "確認画面" },
@@ -710,58 +699,23 @@ URL: https://tender-construction.co.jp
                       <div className="p-1.5 bg-emerald-50 text-emerald-700 rounded-lg">
                         <FileText className="w-5 h-5" />
                       </div>
-                      <h2 className="text-lg font-bold text-slate-900">条件入力</h2>
+                      <h2 className="text-lg font-bold text-slate-900">案件調査AIから引き継いだ案件</h2>
                     </div>
 
-                    <div className="space-y-4 text-xs font-semibold text-slate-700">
+                    <div className="rounded-2xl border border-blue-200 bg-blue-50/60 p-5 space-y-4 text-xs">
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-100 px-2.5 py-1 font-bold text-blue-800"><CheckCircle2 className="w-3.5 h-3.5" /> 引き継ぎ済み</span>
+                        <span className="font-bold text-blue-700">AIおすすめ案件</span>
+                      </div>
                       <div>
-                        <label className="block text-sm font-bold text-slate-800 mb-2">仕様書・図面など (複数可・任意)</label>
-                        <div 
-                          onDragOver={handleDragOver}
-                          onDrop={handleDrop}
-                          onClick={() => fileInputRef.current?.click()}
-                          className="border-2 border-dashed border-slate-300 hover:border-blue-500 hover:bg-slate-50/50 rounded-2xl p-8 text-center cursor-pointer transition-all flex flex-col items-center justify-center gap-3 group"
-                        >
-                          <input type="file" ref={fileInputRef} onChange={handleFileChange} multiple className="hidden" />
-                          <div className="p-4 bg-slate-100 text-slate-400 group-hover:bg-blue-50 group-hover:text-blue-600 rounded-full transition-colors">
-                            <UploadCloud className="w-8 h-8" />
-                          </div>
-                          <div className="space-y-1">
-                            <p className="text-sm font-bold text-slate-800">ドラッグ＆ドロップ または クリックでアップロード</p>
-                            <p className="text-xs text-slate-400 font-medium">PDF / Word / Excel / 画像</p>
-                          </div>
-                        </div>
-
-                        {uploadedFiles.length > 0 && (
-                          <div className="mt-4 border border-slate-200 rounded-xl overflow-hidden divide-y divide-slate-100 bg-slate-50/50">
-                            <div className="bg-slate-100/80 px-4 py-2 text-xs font-bold text-slate-600 flex justify-between items-center">
-                              <span>添付ファイル ({uploadedFiles.length}件)</span>
-                              <button onClick={() => { setUploadedFiles([]); triggerToast("すべての添付ファイルを削除しました"); }} className="text-red-500 hover:text-red-700 text-[10px] font-bold">すべて削除</button>
-                            </div>
-                            {uploadedFiles.map((file, idx) => (
-                              <div key={idx} className="px-4 py-3 flex items-center justify-between text-xs hover:bg-slate-100/50 transition-colors">
-                                <div className="flex items-center gap-2.5 min-w-0">
-                                  <Paperclip className="w-4 h-4 text-slate-400 shrink-0" />
-                                  <span className="font-semibold text-slate-700 truncate">{file.name}</span>
-                                  <span className="text-slate-400 font-mono shrink-0">({file.size})</span>
-                                </div>
-                                <button onClick={() => removeFile(idx)} className="p-1 text-slate-400 hover:text-red-600 rounded-lg"><Trash2 className="w-4 h-4" /></button>
-                              </div>
-                            ))}
-                          </div>
-                        )}
+                        <h3 className="text-base font-extrabold text-slate-900">{selectedTender.title}</h3>
+                        <p className="mt-1 font-semibold text-slate-600">発注機関：{selectedTender.agency}　/　対象地域：{selectedTender.location}</p>
                       </div>
-
-                      <div className="space-y-1.5">
-                        <label className="block text-sm font-bold text-slate-800">特記事項・条件テキスト入力 (任意)</label>
-                        <textarea 
-                          rows={5}
-                          value={conditionText}
-                          onChange={e => setConditionText(e.target.value)}
-                          placeholder="求める技術要件、予定工期、施工範囲、支払い条件など、業者に伝えたい具体的な内容を記述してください..."
-                          className="w-full px-4 py-3 text-xs border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white leading-relaxed placeholder:text-slate-400 font-semibold"
-                        ></textarea>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 rounded-xl border border-blue-100 bg-white p-3.5">
+                        <div><span className="block text-[10px] font-bold text-slate-400">予定価格・予算</span><span className="font-bold text-slate-800">{selectedTender.budget || "未定"}</span></div>
+                        <div><span className="block text-[10px] font-bold text-slate-400">開札予定日</span><span className="font-bold text-slate-800">{selectedTender.openDate}</span></div>
                       </div>
+                      <div><span className="block text-[10px] font-bold text-slate-400">工事内容・要件概要</span><p className="mt-1.5 rounded-xl border border-blue-100 bg-white p-3 text-slate-700 leading-relaxed">{selectedTender.description || "詳細情報はありません。"}</p></div>
                     </div>
 
                     <div className="pt-4 border-t border-slate-100 flex justify-end">
@@ -947,9 +901,9 @@ URL: https://tender-construction.co.jp
                       </div>
 
                       <div>
-                        <span className="block text-[10px] font-bold text-slate-400 uppercase">2. 添付ファイル数 / 条件入力:</span>
-                        <p className="mt-1 font-bold text-slate-800">{uploadedFiles.length} 件の資料添付あり</p>
-                        <p className="mt-1.5 text-slate-600 text-[11px] leading-relaxed max-h-24 overflow-y-auto whitespace-pre-wrap bg-white p-2.5 border border-slate-200 rounded-xl">{conditionText || "条件テキスト指定なし"}</p>
+                        <span className="block text-[10px] font-bold text-slate-400 uppercase">2. 引き継ぎ案件:</span>
+                        <p className="mt-1 font-bold text-slate-800">{selectedTender?.title || "案件が選択されていません"}</p>
+                        {selectedTender && <p className="mt-1.5 text-slate-600 text-[11px] leading-relaxed bg-white p-2.5 border border-slate-200 rounded-xl">{selectedTender.agency} / {selectedTender.location} / {selectedTender.budget || "予算未定"}</p>}
                       </div>
 
                       <div>
@@ -980,7 +934,7 @@ URL: https://tender-construction.co.jp
                         </div>
                         <h2 className="text-lg font-bold text-slate-900">AI自動打診メッセージ生成結果</h2>
                       </div>
-                      <button onClick={() => { setStep(1); setSelectedContractors([]); setUploadedFiles([]); setConditionText(""); setPurposeEstimate(false); setPurposeDrawing(false); setPurposeFreeText(""); }} className="text-xs font-bold text-blue-600 hover:underline">新しく打診を作成する</button>
+                      <button onClick={() => { setStep(1); setSelectedContractors([]); setPurposeEstimate(false); setPurposeDrawing(false); setPurposeFreeText(""); }} className="text-xs font-bold text-blue-600 hover:underline">同じ案件で新しく打診を作成する</button>
                     </div>
 
                     {isGenerating ? (

@@ -555,9 +555,20 @@ export default function TendersPage() {
                   閉じる
                 </button>
                 {!isAdmin && (
-                  <button onClick={() => { alert("お気に入りに登録しました"); setViewingTender(null); }} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5">
-                    <Star className="w-3.5 h-3.5 animate-pulse" /> お気に入りに追加
-                  </button>
+                  <>
+                    <button
+                      onClick={() => {
+                        window.sessionStorage.setItem("selectedTenderForNegotiation", JSON.stringify(viewingTender));
+                        window.location.assign("/contractors");
+                      }}
+                      className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5"
+                    >
+                      <Bot className="w-3.5 h-3.5" /> 業者交渉AIへ引き継ぐ
+                    </button>
+                    <button onClick={() => { alert("お気に入りに登録しました"); setViewingTender(null); }} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5">
+                      <Star className="w-3.5 h-3.5 animate-pulse" /> お気に入りに追加
+                    </button>
+                  </>
                 )}
               </div>
             </div>
