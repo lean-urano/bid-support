@@ -1,17 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { appOrigin, authCookieOptions, createSessionToken, oidcStateCookieName, oidcVerifierCookieName, returnToCookieName, sessionCookieName } from "@/lib/auth";
 import { client, getOidcConfiguration } from "@/lib/oidc";
+import { upsertSsoUser } from "@/lib/queries/users";
 
 export const runtime = "nodejs";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
-
-// デフォルト値を与えると本番でも既知の値のまま起動できてしまうため、明示的な設定を必須にする。
-function requireSsoSyncSecret() {
-  const secret = process.env.SSO_SYNC_SECRET;
-  if (!secret) throw new Error("SSO_SYNC_SECRET is required");
-  return secret;
-}
 
 export async function GET(request: NextRequest) {
   const state = request.cookies.get(oidcStateCookieName)?.value;
@@ -33,13 +25,7 @@ export async function GET(request: NextRequest) {
     const email = typeof userinfo.email === "string" ? userinfo.email : "";
     const name = typeof userinfo.name === "string" ? userinfo.name : "MIRRORユーザー";
 
-    const syncRes = await fetch(`${API_URL}/api/auth/sso-sync`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "X-Sso-Sync-Secret": requireSsoSyncSecret() },
-      body: JSON.stringify({ email, name }),
-    });
-    if (!syncRes.ok) throw new Error("Failed to sync user with backend");
-    const synced: { role: "user" | "admin"; name: string } = await syncRes.json();
+    const synced = await upsertSsoUser({ email, name });
 
     const sessionToken = createSessionToken({ sub: claims.sub, name: synced.name, email, role: synced.role });
     const response = NextResponse.redirect(new URL(returnTo, appOrigin));

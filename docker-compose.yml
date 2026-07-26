@@ -10,30 +10,18 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
-  backend:
-    build: ./backend
-    ports:
-      - "8000:8000"
-    environment:
-      DATABASE_URL: postgresql+asyncpg://postgres:password@db:5432/tender_support
-      SSO_SYNC_SECRET: ${SSO_SYNC_SECRET:?SSO_SYNC_SECRET must be set}
-    depends_on:
-      - db
-    volumes:
-      - ./backend:/app
-
   frontend:
     build: ./frontend
     ports:
       - "3000:3000"
     environment:
+      DATABASE_URL: postgresql://postgres:password@db:5432/tender_support
       OIDC_ISSUER_URL: ${OIDC_ISSUER_URL:-http://localhost:4000}
       OIDC_CLIENT_ID: tender-support
       OIDC_CLIENT_SECRET: ${TENDER_SUPPORT_CLIENT_SECRET:-tender-support-dev-secret}
       OIDC_REDIRECT_URI: ${TENDER_SUPPORT_ORIGIN:-http://localhost:3000}/api/auth/callback
-      SSO_SYNC_SECRET: ${SSO_SYNC_SECRET:?SSO_SYNC_SECRET must be set}
     depends_on:
-      - backend
+      - db
 
 volumes:
   postgres_data:

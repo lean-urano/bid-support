@@ -8,3 +8,5 @@ node_modules/
 postgres_data/
 .DS_Store
 test-results/
+collector/legacy_bids.csv
+collector/dist/

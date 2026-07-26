@@ -8,7 +8,7 @@
 管理者とユーザーの2ロール構成。
 
 ### データソース
-1. **地方公共団体Webサイト** — Playwright (Node.js/TypeScript) でスクレイピング
+1. **地方公共団体Webサイト** — Playwright (Python) でスクレイピング
 2. **NJSS（加入済み）** — CSVダウンロードして定期インポート（NJSSへのスクレイピングは行わない）
 
 ### ユーザー種別
@@ -37,15 +37,16 @@
 
 ## 技術スタック
 
-`docs/adr/001-tech-stack.md`で決定済みの構成。以前このセクションは実態と異なる記述（Next.jsフルスタック / Prisma・Drizzle）になっていたため、2026-07-22に実コードに合わせて修正した。
+`docs/adr/005-nodejs-migration.md`で決定済みの構成（2026-07-24、`docs/adr/001-tech-stack.md`のPython(FastAPI)構成から全面移行）。
 
 | レイヤー | 技術 |
 |---------|------|
 | フロントエンド | Next.js (TypeScript) + shadcn/ui + Tailwind CSS |
-| バックエンド | FastAPI (Python) |
+| バックエンド | Next.js API Routes (TypeScript) |
 | データベース | PostgreSQL + pgvector（RAG用ベクトル拡張） |
-| ORM / マイグレーション | SQLAlchemy + Alembic（バックエンド本体）。Next.js側の補助機能（通知など）のみPrisma + SQLiteを個別に使用 |
-| スクレイピング | Playwright (Python) |
+| DBアクセス | ORM無し。`pg`パッケージによる生SQL。スキーマは`db/schema.sql`に冪等SQLで記述（マイグレーションツール無し）。Next.js側の補助機能（通知など）のみPrisma + SQLiteを個別に使用 |
+| スクレイピング | Playwright + Cheerio (TypeScript)。`collector/`に独立npmパッケージとして分離 |
+| 定期実行 | systemd常駐サービス + シェルループ（`deploy/systemd/`, `deploy/loops/`） |
 | 認証 | MIRROR SSO（`mirror/sso/idp`、OIDC）。tender-support独自のパスワードログインは廃止済み。詳細は`docs/adr/004-sso-auth.md` |
 | AI（生成） | Claude API / OpenAI API |
 | AI（埋め込み） | OpenAI text-embedding-3-small（次元数: 1536） |
@@ -57,18 +58,20 @@
 
 ```
 tender-support/
-├── backend/              # FastAPI (Python) — users/tenders等の中核ドメインAPI
-│   ├── api/              # ルーター (auth.py など)
-│   ├── models/           # SQLAlchemyモデル
-│   ├── db/                # DBセッション設定
-│   ├── alembic/          # マイグレーション
-│   ├── scraper/          # Playwright (Python) スクレイパー
-│   └── importer/         # NJSS CSV インポーター
+├── db/
+│   ├── schema.sql        # 全テーブル定義（冪等SQL、マイグレーションツール無し）
+│   └── seed.ts           # 開発用アカウント投入
+├── collector/            # Playwright + Cheerio (TypeScript) スクレイパー。frontendとは独立npmパッケージ
+│   └── src/
+│       └── sources/      # サイト別スクレイピングロジック
 ├── frontend/             # Next.js (App Router / TypeScript)
-│   ├── app/              # ページ・API Route (app/api/) — 認証(SSO)や通知など補助機能
+│   ├── app/              # ページ・API Route (app/api/) — 認証(SSO)・tenders等の中核ドメインAPI・通知など
 │   ├── components/       # UIコンポーネント (shadcn/ui + Tailwind)
-│   ├── lib/              # 認証セッション処理、AI/RAGロジック、共通処理
+│   ├── lib/              # DB接続(db.ts)・クエリ関数(queries/)・認証セッション処理・AI/RAGロジック
 │   └── prisma/           # Next.js側の補助機能用スキーマ (SQLite。中核ドメインとは別管理)
+├── deploy/
+│   ├── systemd/          # スクレイパー常駐サービスのunitファイル
+│   └── loops/            # 常駐ループのシェルスクリプト
 ├── docs/
 │   └── adr/
 └── docker-compose.yml
@@ -94,8 +97,8 @@ tender-support/
 
 ```bash
 # 中核ドメイン (users/tenders等、Postgres)
-cd backend
-alembic upgrade head
+# db/schema.sqlは冪等なので何度流しても安全。変更はファイル末尾に追記する
+psql "$DATABASE_URL" -f db/schema.sql
 
 # Next.js側の補助機能 (通知など、SQLite)
 cd frontend
@@ -115,7 +118,8 @@ npx prisma migrate dev
 
 ## ADR（アーキテクチャ決定記録）
 
-- [001 - 技術スタック選定](docs/adr/001-tech-stack.md)
+- [001 - 技術スタック選定](docs/adr/001-tech-stack.md)（廃止。005参照）
 - [002 - RAG設計](docs/adr/002-rag.md)
 - [003 - DBスキーマ設計](docs/adr/003-database-schema.md)
 - [004 - 認証をMIRROR SSO(OIDC)に統一](docs/adr/004-sso-auth.md)
+- [005 - バックエンドをNode.js/TypeScriptへ移行](docs/adr/005-nodejs-migration.md)

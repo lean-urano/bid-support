@@ -1,7 +1,7 @@
 # ADR 001 — 技術スタック選定
 
 **日付**: 2026-06-27
-**ステータス**: 決定済み（旧ADRから刷新）
+**ステータス**: 廃止（[ADR005](005-nodejs-migration.md)に置き換え。バックエンドはPython(FastAPI)からNode.js/TypeScriptへ移行済み）
 
 ---
 

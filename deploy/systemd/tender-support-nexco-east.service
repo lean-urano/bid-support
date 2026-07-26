@@ -1,0 +1,15 @@
+[Unit]
+Description=tender-support nexco-east crawler continuous loop
+After=network.target postgresql.service
+
+[Service]
+Type=simple
+ExecStart=/var/www/tender-support/collector/loops/nexco-east.sh
+Restart=always
+RestartSec=10
+User=root
+StandardOutput=append:/var/log/tender-support-nexco-east.log
+StandardError=append:/var/log/tender-support-nexco-east.log
+
+[Install]
+WantedBy=multi-user.target

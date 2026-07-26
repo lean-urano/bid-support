@@ -1,0 +1,26 @@
+{
+  "name": "collector",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "crawl:geps": "tsx src/sources/geps.ts",
+    "crawl:gifu": "tsx src/sources/gifu.ts",
+    "crawl:nexco-east": "tsx src/sources/nexco-east.ts",
+    "migrate-legacy-data": "tsx src/migrate-legacy-data.ts"
+  },
+  "dependencies": {
+    "cheerio": "^1.2.0",
+    "dotenv": "^16.4.5",
+    "pdf-parse": "^1.1.1",
+    "pg": "^8.13.1",
+    "playwright": "^1.49.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/pg": "^8.11.10",
+    "@types/pdf-parse": "^1.1.4",
+    "tsx": "^4.19.2",
+    "typescript": "^5"
+  }
+}
