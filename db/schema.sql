@@ -123,3 +123,7 @@ CREATE INDEX IF NOT EXISTS idx_company_achievements_company_id ON company_achiev
 -- vicca(shops.portal_shop_url)と同じ考え方。部分インデックスはON CONFLICTの推論対象にならないため
 -- 通常のUNIQUEインデックスにする(NULL同士は重複とみなされないため、detail_urlがNULLの行(njss_csv等)は問題ない)。
 CREATE UNIQUE INDEX IF NOT EXISTS uq_tenders_detail_url ON tenders (detail_url);
+
+-- 2026-07-26: 管理者画面からの手動登録案件用にsourceへ'manual'を追加。
+ALTER TABLE tenders DROP CONSTRAINT IF EXISTS tenders_source_check;
+ALTER TABLE tenders ADD CONSTRAINT tenders_source_check CHECK (source IN ('scraping', 'njss_csv', 'manual'));

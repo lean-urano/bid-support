@@ -34,6 +34,36 @@ type Tender = {
   categoryTag?: string;
 };
 
+// DBの tenders 行 <-> 画面表示用 Tender の変換
+type TenderRow = {
+  id: number;
+  title: string;
+  organization: string;
+  category: string | null;
+  location: string | null;
+  budget_max: string | null;
+  deadline: string | null;
+  requirements: string | null;
+};
+
+function rowToTender(row: TenderRow): Tender {
+  return {
+    id: row.id,
+    title: row.title,
+    agency: row.organization,
+    location: row.location ?? "",
+    openDate: row.deadline ?? "",
+    budget: row.budget_max ? `${Number(row.budget_max).toLocaleString()}円` : undefined,
+    description: row.requirements ?? undefined,
+    categoryTag: row.category ?? undefined,
+  };
+}
+
+function parseBudgetText(text: string): number | null {
+  const digits = text.replace(/[^0-9]/g, "");
+  return digits ? Number(digits) : null;
+}
+
 export default function TendersPage() {
   const { user } = useAuth();
   const isAdmin = user?.role === "admin";
@@ -41,12 +71,15 @@ export default function TendersPage() {
   const [viewingTender, setViewingTender] = useState<Tender | null>(null);
   const [showSuccessMsg, setShowSuccessMsg] = useState("");
 
-  // Tenders state (synced for CRUD)
-  const [tenders, setTenders] = useState<Tender[]>([
-    { id: 1, title: "○○市民ホール大規模改修建築工事", agency: "○○市 建築課", location: "東京都○○市", openDate: "2026-07-15", budget: "480,000,000円", description: "RC造地上3階地下1階、延床面積4,500㎡の大規模改修。空調・衛生設備含む一括発注。同規模の公共施設改修実績が必要。", categoryTag: "建築一式・大規模改修" },
-    { id: 2, title: "市立第一中学校体育館空調設備設置工事", agency: "○○県 教育委員会", location: "神奈川県", openDate: "2026-07-20", budget: "85,000,000円", description: "体育館（1,200㎡）への電気式GHP空調機器12台設置およびキュービクル増設工事。", categoryTag: "管工事・空調設備" },
-    { id: 3, title: "△△地区道路舗装修繕工事（第2工区）", agency: "△△建設事務所", location: "埼玉県", openDate: "2026-07-18", budget: "120,000,000円", description: "主要地方道△△線 L=1.2km の切削オーバーレイ工および路面標示工。", categoryTag: "舗装工事・土木" },
-  ]);
+  // Tenders state (DBから取得)
+  const [tenders, setTenders] = useState<Tender[]>([]);
+
+  useEffect(() => {
+    fetch("/api/tenders")
+      .then(res => res.json())
+      .then((data: { tenders: TenderRow[] }) => setTenders(data.tenders.map(rowToTender)))
+      .catch(() => setTenders([]));
+  }, []);
 
   // Deep linking support
   useEffect(() => {
@@ -90,33 +123,40 @@ export default function TendersPage() {
     return matchesQuery && matchesCategory;
   });
 
-  const handleSaveTender = (e: React.FormEvent) => {
+  const handleSaveTender = async (e: React.FormEvent) => {
     e.preventDefault();
+    const payload = {
+      title: tenderForm.title,
+      organization: tenderForm.agency,
+      location: tenderForm.location || null,
+      deadline: tenderForm.openDate || null,
+      budgetMax: tenderForm.budget ? parseBudgetText(tenderForm.budget) : null,
+      category: tenderForm.categoryTag || null,
+      requirements: tenderForm.description || null,
+    };
+
     if (isEditingTender) {
-      setTenders(tenders.map(t => t.id === tenderForm.id ? { 
-        ...t, 
-        title: tenderForm.title, 
-        agency: tenderForm.agency, 
-        location: tenderForm.location, 
-        openDate: tenderForm.openDate,
-        budget: tenderForm.budget,
-        description: tenderForm.description,
-        categoryTag: tenderForm.categoryTag
-      } : t));
-      triggerSuccess("物件マスター情報を更新しました");
+      const res = await fetch(`/api/tenders/${tenderForm.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (res.ok) {
+        const { tender }: { tender: TenderRow } = await res.json();
+        setTenders(tenders.map(t => (t.id === tenderForm.id ? rowToTender(tender) : t)));
+        triggerSuccess("物件マスター情報を更新しました");
+      }
     } else {
-      const newTender: Tender = {
-        id: Date.now(),
-        title: tenderForm.title,
-        agency: tenderForm.agency,
-        location: tenderForm.location || "東京都",
-        openDate: tenderForm.openDate || "2026-08-01",
-        budget: tenderForm.budget || "未定",
-        description: tenderForm.description || "手動登録された物件データです。",
-        categoryTag: tenderForm.categoryTag || "建築一式"
-      };
-      setTenders([newTender, ...tenders]);
-      triggerSuccess("新しい入札物件をデータベースに登録しました");
+      const res = await fetch("/api/tenders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (res.ok) {
+        const { tender }: { tender: TenderRow } = await res.json();
+        setTenders([rowToTender(tender), ...tenders]);
+        triggerSuccess("新しい入札物件をデータベースに登録しました");
+      }
     }
     resetTenderForm();
   };
@@ -135,8 +175,10 @@ export default function TendersPage() {
     setIsEditingTender(true);
   };
 
-  const handleDeleteTender = (id: number) => {
-    if (confirm("この物件マスターデータを削除してもよろしいですか？")) {
+  const handleDeleteTender = async (id: number) => {
+    if (!confirm("この物件マスターデータを削除してもよろしいですか？")) return;
+    const res = await fetch(`/api/tenders/${id}`, { method: "DELETE" });
+    if (res.ok) {
       setTenders(tenders.filter(t => t.id !== id));
       triggerSuccess("物件データを削除しました");
     }
@@ -383,10 +425,7 @@ export default function TendersPage() {
               <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
                 <div>
                   <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">新着公開案件</p>
-                  <h3 className="text-3xl font-bold text-slate-900 mt-1">{tenders.length + 139} <span className="text-sm font-normal text-slate-500">件</span></h3>
-                  <p className="text-xs text-emerald-600 font-semibold mt-1 flex items-center gap-1">
-                    <TrendingUp className="w-3.5 h-3.5" /> 本日 +12 件更新
-                  </p>
+                  <h3 className="text-3xl font-bold text-slate-900 mt-1">{tenders.length} <span className="text-sm font-normal text-slate-500">件</span></h3>
                 </div>
                 <div className="p-3.5 bg-blue-50 text-blue-600 rounded-xl">
                   <Search className="w-6 h-6" />

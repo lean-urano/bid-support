@@ -85,16 +85,34 @@ export default function ContractorsPage() {
   };
 
   // ==========================================
-  // 【共通】業者データ状態管理
+  // 【共通】業者データ状態管理（DBから取得）
   // ==========================================
-  const [contractors, setContractors] = useState<Contractor[]>([
-    { id: 1, name: "山下建設株式会社", address: "東京都新宿区西新宿1-1-1", phone: "03-1234-5678", email: "info@yamashita-const.co.jp", specialties: ["建築一式", "内装仕上"] },
-    { id: 2, name: "佐藤空調設備有限会社", address: "神奈川県横浜市中区桜木町2-2-2", phone: "045-234-5678", email: "contact@sato-hvac.jp", specialties: ["管工事・空調設備"] },
-    { id: 3, name: "鈴木電気工事株式会社", address: "埼玉県さいたま市大宮区桜木町3-3-3", phone: "048-345-6789", email: "support@suzuki-denki.com", specialties: ["電気設備工事"] },
-    { id: 4, name: "田中土木工業株式会社", address: "千葉県千葉市中央区栄町4-4-4", phone: "043-456-7890", email: "sales@tanaka-doboku.co.jp", specialties: ["土木工事"] },
-    { id: 5, name: "高橋内装デザイン", address: "東京都渋谷区神宮前5-5-5", phone: "03-8765-4321", email: "hello@takahashi-interiors.jp", specialties: ["内装仕上"] },
-    { id: 6, name: "渡辺配管工業", address: "神奈川県川崎市川崎区本町1-2-3", phone: "044-987-6543", email: "pipe@watanabe-plumbing.jp", specialties: ["管工事・空調設備"] },
-  ]);
+  type ContractorRow = {
+    id: number;
+    name: string;
+    address: string | null;
+    phone: string | null;
+    email: string | null;
+    specialties: string[] | null;
+  };
+
+  const rowToContractor = (row: ContractorRow): Contractor => ({
+    id: row.id,
+    name: row.name,
+    address: row.address ?? "",
+    phone: row.phone ?? undefined,
+    email: row.email ?? undefined,
+    specialties: row.specialties ?? [],
+  });
+
+  const [contractors, setContractors] = useState<Contractor[]>([]);
+
+  useEffect(() => {
+    fetch("/api/contractors")
+      .then(res => res.json())
+      .then((data: { contractors: ContractorRow[] }) => setContractors(data.contractors.map(rowToContractor)))
+      .catch(() => setContractors([]));
+  }, []);
 
   // ==========================================
   // 【管理者用】業者連絡管理 (Scraping/CRUD/Embedding)
@@ -122,30 +140,39 @@ export default function ContractorsPage() {
     }, 2000);
   };
 
-  const handleSaveContractor = (e: React.FormEvent) => {
+  const handleSaveContractor = async (e: React.FormEvent) => {
     e.preventDefault();
     const specialties = contractorForm.specialtiesText.split(",").map(s => s.trim()).filter(Boolean);
+    const payload = {
+      name: contractorForm.name,
+      address: contractorForm.address || null,
+      phone: contractorForm.phone || null,
+      email: contractorForm.email || null,
+      specialties,
+    };
+
     if (isEditingContractor) {
-      setContractors(contractors.map(c => c.id === contractorForm.id ? { 
-        ...c, 
-        name: contractorForm.name, 
-        address: contractorForm.address, 
-        phone: contractorForm.phone,
-        email: contractorForm.email,
-        specialties
-      } : c));
-      triggerToast("業者マスター情報を更新しました");
+      const res = await fetch(`/api/contractors/${contractorForm.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (res.ok) {
+        const { contractor }: { contractor: ContractorRow } = await res.json();
+        setContractors(contractors.map(c => (c.id === contractorForm.id ? rowToContractor(contractor) : c)));
+        triggerToast("業者マスター情報を更新しました");
+      }
     } else {
-      const newContractor: Contractor = {
-        id: Date.now(),
-        name: contractorForm.name,
-        address: contractorForm.address,
-        phone: contractorForm.phone,
-        email: contractorForm.email,
-        specialties
-      };
-      setContractors([newContractor, ...contractors]);
-      triggerToast("新しい業者情報をDBに登録しました");
+      const res = await fetch("/api/contractors", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (res.ok) {
+        const { contractor }: { contractor: ContractorRow } = await res.json();
+        setContractors([rowToContractor(contractor), ...contractors]);
+        triggerToast("新しい業者情報をDBに登録しました");
+      }
     }
     resetContractorForm();
   };
@@ -162,8 +189,16 @@ export default function ContractorsPage() {
     setIsEditingContractor(true);
   };
 
-  const handleDeleteContractor = (id: string | number) => {
-    if (confirm("この業者情報を削除してもよろしいですか？")) {
+  const handleDeleteContractor = async (id: string | number) => {
+    if (!confirm("この業者情報を削除してもよろしいですか？")) return;
+    if (typeof id === "string") {
+      // カスタムURL登録分(ID未採番)はDBに存在しないためローカル状態のみ削除
+      setContractors(contractors.filter(c => c.id !== id));
+      triggerToast("業者情報を削除しました");
+      return;
+    }
+    const res = await fetch(`/api/contractors/${id}`, { method: "DELETE" });
+    if (res.ok) {
       setContractors(contractors.filter(c => c.id !== id));
       triggerToast("業者情報を削除しました");
     }
