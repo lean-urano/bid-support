@@ -35,7 +35,7 @@ export default function WorkspaceUrlSync() {
         className="bg-background/95 shadow-lg backdrop-blur"
       >
         <RefreshCw aria-hidden="true" />
-        最新の表示に更新
+        再読み込み
       </Button>
     </div>
   );
