@@ -27,6 +27,18 @@ jobs:
       OIDC_CLIENT_SECRET: ${{ secrets.PROD_OIDC_CLIENT_SECRET }}
       AUTH_SESSION_SECRET: ${{ secrets.PROD_AUTH_SESSION_SECRET }}
     steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            frontend/package-lock.json
+
       - name: Validate deployment configuration
         run: |
           set -euo pipefail
@@ -45,10 +57,10 @@ jobs:
           chmod 600 ~/.ssh/id_ed25519
           printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
 
-      - name: Upload production environment
+      - name: Prepare production environment
         run: |
           set -euo pipefail
-          cat > "$RUNNER_TEMP/bid-support.env.production" <<EOF
+          cat > frontend/.env.production <<EOF
           DATABASE_URL=$DATABASE_URL
           OIDC_ISSUER_URL=https://sso.mi-rror.com
           OIDC_CLIENT_ID=bid-support
@@ -58,19 +70,35 @@ jobs:
           NEXT_PUBLIC_MIRROR_SSO_URL=https://sso.mi-rror.com
           AUTH_SESSION_SECRET=$AUTH_SESSION_SECRET
           EOF
-          scp -P "$DEPLOY_PORT" -o StrictHostKeyChecking=yes "$RUNNER_TEMP/bid-support.env.production" "$DEPLOY_USER@$DEPLOY_HOST:/var/www/bid-support/frontend/.env.production"
 
-      - name: Update application and restart services
+      - name: Build frontend
+        run: |
+          set -euo pipefail
+          npm --prefix frontend ci
+          npm --prefix frontend run build
+          tar -C frontend -czf "$RUNNER_TEMP/bid-support-frontend-build.tar.gz" .next
+
+      - name: Upload deployment files
+        run: |
+          set -euo pipefail
+          scp -P "$DEPLOY_PORT" -o StrictHostKeyChecking=yes frontend/.env.production "$RUNNER_TEMP/bid-support-frontend-build.tar.gz" "$DEPLOY_USER@$DEPLOY_HOST:/tmp/"
+
+      - name: Activate release and restart services
         run: |
           set -euo pipefail
           ssh -p "$DEPLOY_PORT" -o StrictHostKeyChecking=yes "$DEPLOY_USER@$DEPLOY_HOST" <<'EOF'
           set -euo pipefail
           cd /var/www/bid-support
           git pull --ff-only origin main
-          npm ci
-          npm --prefix frontend ci
+          mv /tmp/.env.production frontend/.env.production
           npm --prefix collector ci
-          npm --prefix frontend run build
+          npm --prefix frontend ci --omit=dev
+          release_dir=$(mktemp -d /var/www/bid-support/frontend/.next-release.XXXXXX)
+          tar -xzf /tmp/bid-support-frontend-build.tar.gz -C "$release_dir"
+          rm -rf frontend/.next
+          mv "$release_dir/.next" frontend/.next
+          rmdir "$release_dir"
+          rm -f /tmp/bid-support-frontend-build.tar.gz
           pm2 reload bid-support-frontend --update-env
           sudo systemctl try-restart bid-support-gifu bid-support-nexco-east
           for attempt in $(seq 1 15); do

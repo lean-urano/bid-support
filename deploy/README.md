@@ -3,7 +3,8 @@
 ## GitHub Actionsによる本番デプロイ
 
 `main`へのpush（またはActions画面からの手動実行）で、本番VPSの`/var/www/bid-support`を更新する。
-依存関係の固定インストール、Next.jsの本番ビルド、PM2の再読み込み、収集サービスの再起動、ヘルスチェックまでを行う。
+GitHub Actions上で依存関係の固定インストールとNext.jsの本番ビルドを行い、生成した成果物をVPSへ転送する。
+VPS側ではGit更新、実行用依存関係の同期、成果物の展開、PM2の再読み込み、収集サービスの再起動、ヘルスチェックだけを行う。
 
 GitHubリポジトリの **Settings → Secrets and variables → Actions** に次のSecretsを登録する。
 
