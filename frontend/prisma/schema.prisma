@@ -1,4 +1,4 @@
-// Prisma schema for tender-support
+// Prisma schema for bid-support
 
 generator client {
   provider = "prisma-client-js"

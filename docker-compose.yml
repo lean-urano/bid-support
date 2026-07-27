@@ -17,9 +17,9 @@ services:
     environment:
       DATABASE_URL: postgresql://postgres:password@db:5432/tender_support
       OIDC_ISSUER_URL: ${OIDC_ISSUER_URL:-http://localhost:4000}
-      OIDC_CLIENT_ID: tender-support
-      OIDC_CLIENT_SECRET: ${TENDER_SUPPORT_CLIENT_SECRET:-tender-support-dev-secret}
-      OIDC_REDIRECT_URI: ${TENDER_SUPPORT_ORIGIN:-http://localhost:3000}/api/auth/callback
+      OIDC_CLIENT_ID: bid-support
+      OIDC_CLIENT_SECRET: ${BID_SUPPORT_CLIENT_SECRET:-bid-support-dev-secret}
+      OIDC_REDIRECT_URI: ${BID_SUPPORT_ORIGIN:-http://localhost:3000}/api/auth/callback
     depends_on:
       - db
 

@@ -1,5 +1,28 @@
 # VPS上のsystemd設定（バックアップ）
 
+## GitHub Actionsによる本番デプロイ
+
+`main`へのpush（またはActions画面からの手動実行）で、本番VPSの`/var/www/bid-support`を更新する。
+依存関係の固定インストール、Next.jsの本番ビルド、PM2の再読み込み、収集サービスの再起動、ヘルスチェックまでを行う。
+
+GitHubリポジトリの **Settings → Secrets and variables → Actions** に次のSecretsを登録する。
+
+| Secret | 内容 |
+| --- | --- |
+| `DEPLOY_HOST` | 本番VPSのホスト名またはIPアドレス |
+| `DEPLOY_USER` | `/var/www/bid-support`を更新し、PM2とsystemdを操作できるSSHユーザー |
+| `DEPLOY_PORT` | SSHポート（通常は`22`） |
+| `DEPLOY_SSH_PRIVATE_KEY` | デプロイ専用Ed25519秘密鍵 |
+| `DEPLOY_KNOWN_HOSTS` | `ssh-keyscan -H <host>`で取得・確認したknown_hostsの1行 |
+| `PROD_DATABASE_URL` | 本番PostgreSQLの接続URL |
+| `PROD_OIDC_CLIENT_SECRET` | `bid-support`用OIDCクライアントシークレット |
+| `PROD_AUTH_SESSION_SECRET` | 十分にランダムなセッション署名鍵 |
+
+ワークフローは秘密値から`frontend/.env.production`を毎回生成する。このファイルはGit管理対象外で、
+`NEXT_PUBLIC_MIRROR_SSO_URL=https://sso.mi-rror.com`を**ビルド前**に与えるため、公開用SSO URLが
+ブラウザ向けJavaScriptに確実に組み込まれる。SSHユーザーには`systemctl try-restart bid-support-gifu bid-support-nexco-east`を
+パスワードなしで実行できるsudo権限が必要。
+
 本番VPS（`ssh progress`, `ssh mirror`）の `/etc/systemd/system/bid-support-*.service` と
 `/var/www/bid-support/collector/loops/*.sh` は、リポジトリのデプロイスクリプトから自動生成されて
 いるわけではなく、VPS上に直接手動で置く想定（vicca方式）。

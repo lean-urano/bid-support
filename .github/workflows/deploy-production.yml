@@ -1,0 +1,77 @@
+name: Deploy production
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: bid-support-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy to mirror
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+      DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+      DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+      DEPLOY_SSH_PRIVATE_KEY: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
+      DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+      DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
+      OIDC_CLIENT_SECRET: ${{ secrets.PROD_OIDC_CLIENT_SECRET }}
+      AUTH_SESSION_SECRET: ${{ secrets.PROD_AUTH_SESSION_SECRET }}
+    steps:
+      - name: Validate deployment configuration
+        run: |
+          set -euo pipefail
+          for name in DEPLOY_HOST DEPLOY_USER DEPLOY_PORT DEPLOY_SSH_PRIVATE_KEY DEPLOY_KNOWN_HOSTS DATABASE_URL OIDC_CLIENT_SECRET AUTH_SESSION_SECRET; do
+            if [ -z "${!name}" ]; then
+              echo "Required GitHub secret is missing: ${name}" >&2
+              exit 1
+            fi
+          done
+
+      - name: Configure SSH
+        run: |
+          set -euo pipefail
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
+
+      - name: Upload production environment
+        run: |
+          set -euo pipefail
+          cat > "$RUNNER_TEMP/bid-support.env.production" <<EOF
+          DATABASE_URL=$DATABASE_URL
+          OIDC_ISSUER_URL=https://sso.mi-rror.com
+          OIDC_CLIENT_ID=bid-support
+          OIDC_CLIENT_SECRET=$OIDC_CLIENT_SECRET
+          OIDC_REDIRECT_URI=https://bid.mi-rror.com/api/auth/callback
+          BID_SUPPORT_LOGIN_URL=https://bid.mi-rror.com/login
+          NEXT_PUBLIC_MIRROR_SSO_URL=https://sso.mi-rror.com
+          AUTH_SESSION_SECRET=$AUTH_SESSION_SECRET
+          EOF
+          scp -P "$DEPLOY_PORT" -o StrictHostKeyChecking=yes "$RUNNER_TEMP/bid-support.env.production" "$DEPLOY_USER@$DEPLOY_HOST:/var/www/bid-support/frontend/.env.production"
+
+      - name: Update application and restart services
+        run: |
+          set -euo pipefail
+          ssh -p "$DEPLOY_PORT" -o StrictHostKeyChecking=yes "$DEPLOY_USER@$DEPLOY_HOST" <<'EOF'
+          set -euo pipefail
+          cd /var/www/bid-support
+          git pull --ff-only origin main
+          npm ci
+          npm --prefix frontend ci
+          npm --prefix collector ci
+          npm --prefix frontend run build
+          pm2 reload bid-support-frontend --update-env
+          sudo systemctl try-restart bid-support-gifu bid-support-nexco-east
+          curl --fail --silent --show-error http://127.0.0.1:4102/login >/dev/null
+          EOF
