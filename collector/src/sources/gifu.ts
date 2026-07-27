@@ -3,7 +3,7 @@
 // 各詳細ページの構造化フィールド(工事名・予定価格・締切日等)を抽出する。
 import * as cheerio from "cheerio";
 import { createRateLimiter, downloadPdfText, fetchHtml, sleep } from "../html-crawler.js";
-import { saveTenders, type ScrapedTender } from "../tenders.js";
+import { saveBids, type ScrapedBid } from "../bids.js";
 
 const BASE_URL = "https://www.pref.gifu.lg.jp";
 const LIST_URL = `${BASE_URL}/bid/search/search.php`;
@@ -61,7 +61,7 @@ async function fetchList(): Promise<string[]> {
   return urls;
 }
 
-async function parseDetail(html: string, url: string): Promise<ScrapedTender | null> {
+async function parseDetail(html: string, url: string): Promise<ScrapedBid | null> {
   const $ = cheerio.load(html);
   const main = $("#main");
   if (main.length === 0) return null;
@@ -150,31 +150,31 @@ async function parseDetail(html: string, url: string): Promise<ScrapedTender | n
   };
 }
 
-async function crawl(): Promise<ScrapedTender[]> {
+async function crawl(): Promise<ScrapedBid[]> {
   console.log("[gifu] クロール開始");
   const detailUrls = await fetchList();
   console.log(`[gifu] ${detailUrls.length}件の詳細ページを取得`);
 
-  const tenders: ScrapedTender[] = [];
+  const bids: ScrapedBid[] = [];
   for (const url of detailUrls) {
     try {
       await rateLimit();
       const html = await fetchHtml(url);
-      const tender = await parseDetail(html, url);
-      if (tender) tenders.push(tender);
+      const bid = await parseDetail(html, url);
+      if (bid) bids.push(bid);
     } catch (err) {
       console.debug(`詳細ページ取得失敗 ${url}:`, err);
     }
     await sleep(200);
   }
 
-  console.log(`[gifu] ${tenders.length}件取得完了`);
-  return tenders;
+  console.log(`[gifu] ${bids.length}件取得完了`);
+  return bids;
 }
 
 async function main() {
-  const tenders = await crawl();
-  const { newCount, updatedCount } = await saveTenders(tenders);
+  const bids = await crawl();
+  const { newCount, updatedCount } = await saveBids(bids);
   console.log(`[gifu] ${newCount} new, ${updatedCount} updated`);
 }
 

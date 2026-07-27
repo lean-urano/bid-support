@@ -1,8 +1,8 @@
 // bidAI(Python)のcrawl_tasks.pyのsave_bids相当。
-// Bidモデル(bidai) → tendersテーブルへのフィールドマッピングとupsertを行う。
+// Bidモデル(bidai) → bidsテーブルへのフィールドマッピングとupsertを行う。
 import { pool } from "./db.js";
 
-export interface ScrapedTender {
+export interface ScrapedBid {
   title: string;
   organization: string;
   category: string | null;
@@ -20,13 +20,13 @@ export interface SaveResult {
   updatedCount: number;
 }
 
-export async function saveTenders(tenders: ScrapedTender[]): Promise<SaveResult> {
+export async function saveBids(bids: ScrapedBid[]): Promise<SaveResult> {
   let newCount = 0;
   let updatedCount = 0;
 
-  for (const t of tenders) {
+  for (const b of bids) {
     const { rows } = await pool.query<{ inserted: boolean }>(
-      `INSERT INTO tenders (
+      `INSERT INTO bids (
          title, organization, category, location,
          budget_min, budget_max, announced_date, deadline,
          detail_url, source, raw_data
@@ -45,16 +45,16 @@ export async function saveTenders(tenders: ScrapedTender[]): Promise<SaveResult>
          updated_at = now()
        RETURNING (xmax = 0) AS inserted`,
       [
-        t.title,
-        t.organization,
-        t.category,
-        t.location,
-        t.budgetMin,
-        t.budgetMax,
-        t.announcedDate,
-        t.deadline,
-        t.detailUrl,
-        t.rawData ? JSON.stringify(t.rawData) : null,
+        b.title,
+        b.organization,
+        b.category,
+        b.location,
+        b.budgetMin,
+        b.budgetMax,
+        b.announcedDate,
+        b.deadline,
+        b.detailUrl,
+        b.rawData ? JSON.stringify(b.rawData) : null,
       ]
     );
     if (rows[0]?.inserted) newCount++;

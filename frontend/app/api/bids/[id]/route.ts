@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
-import { deleteTender, updateTender } from "@/lib/queries/tenders";
+import { deleteBid, updateBid } from "@/lib/queries/bids";
 
 export const runtime = "nodejs";
 
@@ -10,7 +10,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
   const { id } = await params;
   const body = await request.json();
-  const tender = await updateTender(Number(id), {
+  const bid = await updateBid(Number(id), {
     title: body.title,
     organization: body.organization,
     location: body.location ?? null,
@@ -19,8 +19,8 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     category: body.category ?? null,
     requirements: body.requirements ?? null,
   });
-  if (!tender) return NextResponse.json({ error: "not found" }, { status: 404 });
-  return NextResponse.json({ tender });
+  if (!bid) return NextResponse.json({ error: "not found" }, { status: 404 });
+  return NextResponse.json({ bid });
 }
 
 export async function DELETE(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -28,6 +28,6 @@ export async function DELETE(_request: NextRequest, { params }: { params: Promis
   if (!session || session.role !== "admin") return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
   const { id } = await params;
-  await deleteTender(Number(id));
+  await deleteBid(Number(id));
   return NextResponse.json({ ok: true });
 }

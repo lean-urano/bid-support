@@ -23,7 +23,7 @@ import {
 import { useAuth } from "@/lib/auth-context";
 import Header from "@/components/Header";
 
-type Tender = {
+type Bid = {
   id: number;
   title: string;
   agency: string;
@@ -34,8 +34,8 @@ type Tender = {
   categoryTag?: string;
 };
 
-// DBの tenders 行 <-> 画面表示用 Tender の変換
-type TenderRow = {
+// DBの bids 行 <-> 画面表示用 Bid の変換
+type BidRow = {
   id: number;
   title: string;
   organization: string;
@@ -46,7 +46,7 @@ type TenderRow = {
   requirements: string | null;
 };
 
-function rowToTender(row: TenderRow): Tender {
+function rowToBid(row: BidRow): Bid {
   return {
     id: row.id,
     title: row.title,
@@ -64,21 +64,21 @@ function parseBudgetText(text: string): number | null {
   return digits ? Number(digits) : null;
 }
 
-export default function TendersPage() {
+export default function BidsPage() {
   const { user } = useAuth();
   const isAdmin = user?.role === "admin";
 
-  const [viewingTender, setViewingTender] = useState<Tender | null>(null);
+  const [viewingBid, setViewingBid] = useState<Bid | null>(null);
   const [showSuccessMsg, setShowSuccessMsg] = useState("");
 
-  // Tenders state (DBから取得)
-  const [tenders, setTenders] = useState<Tender[]>([]);
+  // Bids state (DBから取得)
+  const [bids, setBids] = useState<Bid[]>([]);
 
   useEffect(() => {
-    fetch("/api/tenders")
+    fetch("/api/bids")
       .then(res => res.json())
-      .then((data: { tenders: TenderRow[] }) => setTenders(data.tenders.map(rowToTender)))
-      .catch(() => setTenders([]));
+      .then((data: { bids: BidRow[] }) => setBids(data.bids.map(rowToBid)))
+      .catch(() => setBids([]));
   }, []);
 
   // Deep linking support
@@ -87,20 +87,20 @@ export default function TendersPage() {
       const urlParams = new URLSearchParams(window.location.search);
       const id = urlParams.get("id");
       if (id) {
-        const tenderId = parseInt(id, 10);
-        const t = tenders.find(item => item.id === tenderId);
-        if (t) setViewingTender(t);
+        const bidId = parseInt(id, 10);
+        const t = bids.find(item => item.id === bidId);
+        if (t) setViewingBid(t);
       }
     }
-  }, [tenders]);
+  }, [bids]);
 
   // 検索・フィルター用State
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("すべて");
 
   // 【管理者用】物件フォーム
-  const [tenderForm, setTenderForm] = useState({ id: 0, title: "", agency: "", location: "", openDate: "", budget: "", description: "", categoryTag: "建築一式・大規模改修" });
-  const [isEditingTender, setIsEditingTender] = useState(false);
+  const [bidForm, setBidForm] = useState({ id: 0, title: "", agency: "", location: "", openDate: "", budget: "", description: "", categoryTag: "建築一式・大規模改修" });
+  const [isEditingBid, setIsEditingBid] = useState(false);
 
   // スクレイピング/インポートスピナー表示用
   const [isScraping, setIsScraping] = useState(false);
@@ -111,82 +111,82 @@ export default function TendersPage() {
     setTimeout(() => setShowSuccessMsg(""), 4000);
   };
 
-  const getAiUserRecommendation = (tenderId: number) => {
-    if (tenderId === 1) return { score: 95, label: "高相性", reason: "自社の「公共施設大規模改修」の過去実績およびBランク以上の資格要件と95%合致しています。" };
-    if (tenderId === 2) return { score: 91, label: "高相性", reason: "自社の「管工事・GHP空調設置」の得意分野および保有技術者数と高い相性です。" };
+  const getAiUserRecommendation = (bidId: number) => {
+    if (bidId === 1) return { score: 95, label: "高相性", reason: "自社の「公共施設大規模改修」の過去実績およびBランク以上の資格要件と95%合致しています。" };
+    if (bidId === 2) return { score: 91, label: "高相性", reason: "自社の「管工事・GHP空調設置」の得意分野および保有技術者数と高い相性です。" };
     return { score: 84, label: "良好", reason: "地域要件は合致していますが、土木舗装実績の配点が標準的です。" };
   };
 
-  const filteredTenders = tenders.filter(t => {
+  const filteredBids = bids.filter(t => {
     const matchesQuery = t.title.includes(searchQuery) || t.agency.includes(searchQuery) || t.location.includes(searchQuery);
     const matchesCategory = selectedCategory === "すべて" || (t.categoryTag && t.categoryTag.includes(selectedCategory));
     return matchesQuery && matchesCategory;
   });
 
-  const handleSaveTender = async (e: React.FormEvent) => {
+  const handleSaveBid = async (e: React.FormEvent) => {
     e.preventDefault();
     const payload = {
-      title: tenderForm.title,
-      organization: tenderForm.agency,
-      location: tenderForm.location || null,
-      deadline: tenderForm.openDate || null,
-      budgetMax: tenderForm.budget ? parseBudgetText(tenderForm.budget) : null,
-      category: tenderForm.categoryTag || null,
-      requirements: tenderForm.description || null,
+      title: bidForm.title,
+      organization: bidForm.agency,
+      location: bidForm.location || null,
+      deadline: bidForm.openDate || null,
+      budgetMax: bidForm.budget ? parseBudgetText(bidForm.budget) : null,
+      category: bidForm.categoryTag || null,
+      requirements: bidForm.description || null,
     };
 
-    if (isEditingTender) {
-      const res = await fetch(`/api/tenders/${tenderForm.id}`, {
+    if (isEditingBid) {
+      const res = await fetch(`/api/bids/${bidForm.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
       if (res.ok) {
-        const { tender }: { tender: TenderRow } = await res.json();
-        setTenders(tenders.map(t => (t.id === tenderForm.id ? rowToTender(tender) : t)));
+        const { bid }: { bid: BidRow } = await res.json();
+        setBids(bids.map(t => (t.id === bidForm.id ? rowToBid(bid) : t)));
         triggerSuccess("物件マスター情報を更新しました");
       }
     } else {
-      const res = await fetch("/api/tenders", {
+      const res = await fetch("/api/bids", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
       if (res.ok) {
-        const { tender }: { tender: TenderRow } = await res.json();
-        setTenders([rowToTender(tender), ...tenders]);
+        const { bid }: { bid: BidRow } = await res.json();
+        setBids([rowToBid(bid), ...bids]);
         triggerSuccess("新しい入札物件をデータベースに登録しました");
       }
     }
-    resetTenderForm();
+    resetBidForm();
   };
 
-  const handleEditTender = (tender: Tender) => {
-    setTenderForm({ 
-      id: tender.id, 
-      title: tender.title, 
-      agency: tender.agency, 
-      location: tender.location, 
-      openDate: tender.openDate, 
-      budget: tender.budget || "", 
-      description: tender.description || "",
-      categoryTag: tender.categoryTag || "建築一式・大規模改修"
+  const handleEditBid = (bid: Bid) => {
+    setBidForm({ 
+      id: bid.id, 
+      title: bid.title, 
+      agency: bid.agency, 
+      location: bid.location, 
+      openDate: bid.openDate, 
+      budget: bid.budget || "", 
+      description: bid.description || "",
+      categoryTag: bid.categoryTag || "建築一式・大規模改修"
     });
-    setIsEditingTender(true);
+    setIsEditingBid(true);
   };
 
-  const handleDeleteTender = async (id: number) => {
+  const handleDeleteBid = async (id: number) => {
     if (!confirm("この物件マスターデータを削除してもよろしいですか？")) return;
-    const res = await fetch(`/api/tenders/${id}`, { method: "DELETE" });
+    const res = await fetch(`/api/bids/${id}`, { method: "DELETE" });
     if (res.ok) {
-      setTenders(tenders.filter(t => t.id !== id));
+      setBids(bids.filter(t => t.id !== id));
       triggerSuccess("物件データを削除しました");
     }
   };
 
-  const resetTenderForm = () => {
-    setTenderForm({ id: 0, title: "", agency: "", location: "", openDate: "", budget: "", description: "", categoryTag: "建築一式・大規模改修" });
-    setIsEditingTender(false);
+  const resetBidForm = () => {
+    setBidForm({ id: 0, title: "", agency: "", location: "", openDate: "", budget: "", description: "", categoryTag: "建築一式・大規模改修" });
+    setIsEditingBid(false);
   };
 
   const runScraper = () => {
@@ -291,43 +291,43 @@ export default function TendersPage() {
               <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-md h-fit space-y-4">
                 <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                   <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
-                    {isEditingTender ? <Edit className="w-4 h-4 text-amber-600" /> : <PlusCircle className="w-4 h-4 text-indigo-600" />}
-                    {isEditingTender ? "物件情報の編集" : "新規入札案件のマスター登録"}
+                    {isEditingBid ? <Edit className="w-4 h-4 text-amber-600" /> : <PlusCircle className="w-4 h-4 text-indigo-600" />}
+                    {isEditingBid ? "物件情報の編集" : "新規入札案件のマスター登録"}
                   </h3>
-                  {isEditingTender && (
-                    <button onClick={resetTenderForm} className="text-xs text-slate-500 hover:text-slate-800 flex items-center gap-1 cursor-pointer">
+                  {isEditingBid && (
+                    <button onClick={resetBidForm} className="text-xs text-slate-500 hover:text-slate-800 flex items-center gap-1 cursor-pointer">
                       <X className="w-3.5 h-3.5" /> キャンセル
                     </button>
                   )}
                 </div>
 
-                <form onSubmit={handleSaveTender} className="space-y-3.5 text-xs">
+                <form onSubmit={handleSaveBid} className="space-y-3.5 text-xs">
                   <div>
                     <label className="block font-bold text-slate-700 mb-1">案件名 / 工事名称 *</label>
-                    <input type="text" required value={tenderForm.title} onChange={e => setTenderForm({...tenderForm, title: e.target.value})} placeholder="例: 新築市民体育館建設工事" className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                    <input type="text" required value={bidForm.title} onChange={e => setBidForm({...bidForm, title: e.target.value})} placeholder="例: 新築市民体育館建設工事" className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
                   </div>
                   <div>
                     <label className="block font-bold text-slate-700 mb-1">発注機関 *</label>
-                    <input type="text" required value={tenderForm.agency} onChange={e => setTenderForm({...tenderForm, agency: e.target.value})} placeholder="例: ○○市 教育委員会" className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                    <input type="text" required value={bidForm.agency} onChange={e => setBidForm({...bidForm, agency: e.target.value})} placeholder="例: ○○市 教育委員会" className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
                   </div>
                   <div className="grid grid-cols-2 gap-2">
                     <div>
                       <label className="block font-bold text-slate-700 mb-1">対象地域</label>
-                      <input type="text" value={tenderForm.location} onChange={e => setTenderForm({...tenderForm, location: e.target.value})} placeholder="例: 東京都" className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                      <input type="text" value={bidForm.location} onChange={e => setBidForm({...bidForm, location: e.target.value})} placeholder="例: 東京都" className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
                     </div>
                     <div>
                       <label className="block font-bold text-slate-700 mb-1">予定価格 / 予算感</label>
-                      <input type="text" value={tenderForm.budget} onChange={e => setTenderForm({...tenderForm, budget: e.target.value})} placeholder="例: 1億2000万円" className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                      <input type="text" value={bidForm.budget} onChange={e => setBidForm({...bidForm, budget: e.target.value})} placeholder="例: 1億2000万円" className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-2">
                     <div>
                       <label className="block font-bold text-slate-700 mb-1">開札予定日</label>
-                      <input type="date" value={tenderForm.openDate} onChange={e => setTenderForm({...tenderForm, openDate: e.target.value})} className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                      <input type="date" value={bidForm.openDate} onChange={e => setBidForm({...bidForm, openDate: e.target.value})} className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
                     </div>
                     <div>
                       <label className="block font-bold text-slate-700 mb-1">工種・カテゴリ分類</label>
-                      <select value={tenderForm.categoryTag} onChange={e => setTenderForm({...tenderForm, categoryTag: e.target.value})} className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+                      <select value={bidForm.categoryTag} onChange={e => setBidForm({...bidForm, categoryTag: e.target.value})} className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
                         <option>建築一式・大規模改修</option>
                         <option>管工事・空調設備</option>
                         <option>電気設備工事</option>
@@ -337,10 +337,10 @@ export default function TendersPage() {
                   </div>
                   <div>
                     <label className="block font-bold text-slate-700 mb-1">工事詳細概要・参加資格要件</label>
-                    <textarea rows={3} value={tenderForm.description} onChange={e => setTenderForm({...tenderForm, description: e.target.value})} placeholder="工期、使用書番号、参加実績ランク要件など..." className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+                    <textarea rows={3} value={bidForm.description} onChange={e => setBidForm({...bidForm, description: e.target.value})} placeholder="工期、使用書番号、参加実績ランク要件など..." className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
                   </div>
-                  <button type="submit" className={`w-full py-2.5 text-white font-bold text-xs rounded-xl shadow-sm transition-colors cursor-pointer flex items-center justify-center gap-1.5 ${isEditingTender ? "bg-amber-600 hover:bg-amber-700" : "bg-indigo-600 hover:bg-indigo-700"}`}>
-                    <PlusCircle className="w-4 h-4" /> {isEditingTender ? "マスター情報を更新" : "マスターデータベースに登録"}
+                  <button type="submit" className={`w-full py-2.5 text-white font-bold text-xs rounded-xl shadow-sm transition-colors cursor-pointer flex items-center justify-center gap-1.5 ${isEditingBid ? "bg-amber-600 hover:bg-amber-700" : "bg-indigo-600 hover:bg-indigo-700"}`}>
+                    <PlusCircle className="w-4 h-4" /> {isEditingBid ? "マスター情報を更新" : "マスターデータベースに登録"}
                   </button>
                 </form>
               </div>
@@ -349,7 +349,7 @@ export default function TendersPage() {
               <div className="lg:col-span-2 bg-white p-6 rounded-2xl border border-slate-200 shadow-md space-y-4">
                 <div className="flex border-b border-slate-100 pb-3 justify-between items-center">
                   <h3 className="text-sm font-bold text-slate-800">
-                    登録済み入札物件マスター一覧 ({tenders.length}件)
+                    登録済み入札物件マスター一覧 ({bids.length}件)
                   </h3>
                   <div className="flex gap-2 text-xs">
                     <input 
@@ -375,7 +375,7 @@ export default function TendersPage() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-200">
-                      {filteredTenders.map(t => (
+                      {filteredBids.map(t => (
                         <tr key={t.id} className="hover:bg-slate-50 transition-colors">
                           <td className="p-3 font-mono text-slate-400">#{t.id}</td>
                           <td className="p-3 font-semibold text-slate-900">{t.title}</td>
@@ -385,13 +385,13 @@ export default function TendersPage() {
                           </td>
                           <td className="p-3">{t.openDate}</td>
                           <td className="p-3 text-right space-x-1 whitespace-nowrap">
-                            <button onClick={() => setViewingTender(t)} className="px-2 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded font-bold transition-colors cursor-pointer">
+                            <button onClick={() => setViewingBid(t)} className="px-2 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded font-bold transition-colors cursor-pointer">
                               詳細
                             </button>
-                            <button onClick={() => handleEditTender(t)} className="px-2 py-1 bg-slate-100 hover:bg-amber-100 text-slate-700 hover:text-amber-800 rounded font-bold transition-colors cursor-pointer">
+                            <button onClick={() => handleEditBid(t)} className="px-2 py-1 bg-slate-100 hover:bg-amber-100 text-slate-700 hover:text-amber-800 rounded font-bold transition-colors cursor-pointer">
                               編集
                             </button>
-                            <button onClick={() => handleDeleteTender(t.id)} className="px-2 py-1 bg-slate-100 hover:bg-red-100 text-slate-700 hover:text-red-700 rounded font-bold transition-colors cursor-pointer">
+                            <button onClick={() => handleDeleteBid(t.id)} className="px-2 py-1 bg-slate-100 hover:bg-red-100 text-slate-700 hover:text-red-700 rounded font-bold transition-colors cursor-pointer">
                               削除
                             </button>
                           </td>
@@ -425,7 +425,7 @@ export default function TendersPage() {
               <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
                 <div>
                   <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">新着公開案件</p>
-                  <h3 className="text-3xl font-bold text-slate-900 mt-1">{tenders.length} <span className="text-sm font-normal text-slate-500">件</span></h3>
+                  <h3 className="text-3xl font-bold text-slate-900 mt-1">{bids.length} <span className="text-sm font-normal text-slate-500">件</span></h3>
                 </div>
                 <div className="p-3.5 bg-blue-50 text-blue-600 rounded-xl">
                   <Search className="w-6 h-6" />
@@ -503,12 +503,12 @@ export default function TendersPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                    {filteredTenders.length === 0 ? (
+                    {filteredBids.length === 0 ? (
                       <tr>
                         <td colSpan={6} className="py-8 text-center text-xs text-slate-400">該当する案件は見つかりませんでした</td>
                       </tr>
                     ) : (
-                      filteredTenders.map(t => {
+                      filteredBids.map(t => {
                         const aiRec = getAiUserRecommendation(t.id);
                         return (
                           <tr key={t.id} className="hover:bg-slate-50 transition-colors">
@@ -524,7 +524,7 @@ export default function TendersPage() {
                             </td>
                             <td className="py-4 px-4">{t.openDate}</td>
                             <td className="py-4 px-4 text-right">
-                              <button onClick={() => setViewingTender(t)} className="text-xs font-bold px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-all cursor-pointer">
+                              <button onClick={() => setViewingBid(t)} className="text-xs font-bold px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-all cursor-pointer">
                                 閲覧
                               </button>
                             </td>
@@ -541,12 +541,12 @@ export default function TendersPage() {
       </main>
 
       {/* 物件詳細閲覧モーダル */}
-      {viewingTender && (() => {
-        const aiRec = getAiUserRecommendation(viewingTender.id);
+      {viewingBid && (() => {
+        const aiRec = getAiUserRecommendation(viewingBid.id);
         return (
           <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-fade-in">
             <div className="bg-white rounded-2xl max-w-2xl w-full p-6 space-y-5 shadow-2xl border border-slate-200 relative">
-              <button onClick={() => setViewingTender(null)} className="absolute top-4 right-4 p-1 text-slate-400 hover:text-slate-700 rounded-full hover:bg-slate-100 cursor-pointer">
+              <button onClick={() => setViewingBid(null)} className="absolute top-4 right-4 p-1 text-slate-400 hover:text-slate-700 rounded-full hover:bg-slate-100 cursor-pointer">
                 <X className="w-5 h-5" />
               </button>
               
@@ -556,8 +556,8 @@ export default function TendersPage() {
                     <Sparkles className="w-3.5 h-3.5" /> AIおすすめ度 {aiRec.score}点 ({aiRec.label})
                   </span>
                 )}
-                <h3 className="text-xl font-bold text-slate-900">{viewingTender.title}</h3>
-                <p className="text-xs text-slate-500">発注機関: {viewingTender.agency} | 対象地域: {viewingTender.location}</p>
+                <h3 className="text-xl font-bold text-slate-900">{viewingBid.title}</h3>
+                <p className="text-xs text-slate-500">発注機関: {viewingBid.agency} | 対象地域: {viewingBid.location}</p>
               </div>
 
               {!isAdmin && (
@@ -573,38 +573,38 @@ export default function TendersPage() {
                 <div className="grid grid-cols-2 gap-4 bg-slate-50 p-3.5 rounded-xl border border-slate-200">
                   <div>
                     <span className="block text-slate-400 text-[10px] font-bold uppercase">予定価格 / 予算</span>
-                    <span className="font-bold text-slate-900 text-sm">{viewingTender.budget || "未定"}</span>
+                    <span className="font-bold text-slate-900 text-sm">{viewingBid.budget || "未定"}</span>
                   </div>
                   <div>
                     <span className="block text-slate-400 text-[10px] font-bold uppercase">開札予定日</span>
-                    <span className="font-bold text-slate-900 text-sm">{viewingTender.openDate}</span>
+                    <span className="font-bold text-slate-900 text-sm">{viewingBid.openDate}</span>
                   </div>
                 </div>
 
                 <div className="space-y-1">
                   <span className="font-bold text-slate-900">工事内容・要件概要</span>
                   <p className="p-3 bg-slate-50 rounded-xl border border-slate-200 leading-relaxed text-slate-600">
-                    {viewingTender.description || "詳細情報はありません。"}
+                    {viewingBid.description || "詳細情報はありません。"}
                   </p>
                 </div>
               </div>
 
               <div className="flex justify-end gap-3 pt-3 border-t border-slate-100">
-                <button onClick={() => setViewingTender(null)} className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold transition-colors cursor-pointer">
+                <button onClick={() => setViewingBid(null)} className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold transition-colors cursor-pointer">
                   閉じる
                 </button>
                 {!isAdmin && (
                   <>
                     <button
                       onClick={() => {
-                        window.sessionStorage.setItem("selectedTenderForNegotiation", JSON.stringify(viewingTender));
+                        window.sessionStorage.setItem("selectedBidForNegotiation", JSON.stringify(viewingBid));
                         window.location.assign("/contractors");
                       }}
                       className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5"
                     >
                       <Bot className="w-3.5 h-3.5" /> 業者交渉AIへ引き継ぐ
                     </button>
-                    <button onClick={() => { alert("お気に入りに登録しました"); setViewingTender(null); }} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5">
+                    <button onClick={() => { alert("お気に入りに登録しました"); setViewingBid(null); }} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5">
                       <Star className="w-3.5 h-3.5 animate-pulse" /> お気に入りに追加
                     </button>
                   </>

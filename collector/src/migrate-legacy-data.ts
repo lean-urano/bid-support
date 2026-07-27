@@ -156,7 +156,7 @@ async function main() {
     const mapped = mapRow(row);
 
     const { rows: result } = await pool.query<{ inserted: boolean }>(
-      `INSERT INTO tenders (
+      `INSERT INTO bids (
          title, organization, category, location,
          budget_min, budget_max, announced_date, deadline,
          detail_url, source, raw_data

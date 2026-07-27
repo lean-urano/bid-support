@@ -1,0 +1,15 @@
+[Unit]
+Description=bid-support gifu crawler continuous loop
+After=network.target postgresql.service
+
+[Service]
+Type=simple
+ExecStart=/var/www/bid-support/collector/loops/gifu.sh
+Restart=always
+RestartSec=10
+User=root
+StandardOutput=append:/var/log/bid-support-gifu.log
+StandardError=append:/var/log/bid-support-gifu.log
+
+[Install]
+WantedBy=multi-user.target

@@ -2,10 +2,10 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
 
 // 既存の非Partitioned Cookieと衝突させず、再ログインでCHIPSへ移行する。
-export const sessionCookieName = "tender_support_session_chips";
-export const oidcStateCookieName = "tender_support_oidc_state_chips";
-export const oidcVerifierCookieName = "tender_support_oidc_verifier_chips";
-export const returnToCookieName = "tender_support_return_to_chips";
+export const sessionCookieName = "bid_support_session_chips";
+export const oidcStateCookieName = "bid_support_oidc_state_chips";
+export const oidcVerifierCookieName = "bid_support_oidc_verifier_chips";
+export const returnToCookieName = "bid_support_return_to_chips";
 
 export interface UserSession {
   sub: string;
@@ -15,7 +15,7 @@ export interface UserSession {
   expiresAt: number;
 }
 
-const sessionSecret = process.env.AUTH_SESSION_SECRET ?? (process.env.NODE_ENV === "production" ? "" : "tender-support-development-session-secret");
+const sessionSecret = process.env.AUTH_SESSION_SECRET ?? (process.env.NODE_ENV === "production" ? "" : "bid-support-development-session-secret");
 
 function encode(value: string) {
   return Buffer.from(value).toString("base64url");

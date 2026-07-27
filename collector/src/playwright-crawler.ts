@@ -7,7 +7,7 @@ export async function fetchRenderedHtml(url: string, waitSelector?: string): Pro
   const browser = await chromium.launch({ headless: true });
   try {
     const context = await browser.newContext({
-      userAgent: "Mozilla/5.0 (compatible; TenderSupportBot/1.0)",
+      userAgent: "Mozilla/5.0 (compatible; BidSupportBot/1.0)",
       locale: "ja-JP",
     });
     const page = await context.newPage();

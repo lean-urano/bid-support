@@ -3,7 +3,7 @@
 import pdfParse from "pdf-parse";
 
 const DEFAULT_HEADERS = {
-  "User-Agent": "Mozilla/5.0 (compatible; TenderSupportBot/1.0; procurement info collector)",
+  "User-Agent": "Mozilla/5.0 (compatible; BidSupportBot/1.0; procurement info collector)",
   "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
   "Accept-Language": "ja,en-US;q=0.7,en;q=0.3",
 };

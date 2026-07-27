@@ -1,4 +1,4 @@
-# tender-support
+# bid-support
 
 入札情報を集約・管理するWebダッシュボード。建設業者向けの入札支援システム。
 
@@ -53,7 +53,7 @@
 ## ディレクトリ構成
 
 ```
-tender-support/
+bid-support/
 ├── frontend/            # Next.js (App Router / TypeScript フルスタック)
 │   ├── app/             # ページ・API Route (app/api/)
 │   ├── components/      # UIコンポーネント (shadcn/ui + Tailwind)
@@ -73,9 +73,9 @@ tender-support/
 | テーブル | 内容 |
 |---------|------|
 | `users` | 管理者・ユーザー（role: admin/user） |
-| `tenders` | 入札案件（scraping / njss_csv） |
-| `tender_favorites` | お気に入り（user × tender） |
-| `tender_recommendations` | AIおすすめ度（0〜100）＋理由テキスト |
+| `bids` | 入札案件（scraping / njss_csv） |
+| `bid_favorites` | お気に入り（user × bid） |
+| `bid_recommendations` | AIおすすめ度（0〜100）＋理由テキスト |
 | `contractors` | 業者情報 |
 | `company_profile` | 自社基本情報・理念・得意分野（1レコード） |
 | `company_licenses` | 自社の資格・許可（複数） |

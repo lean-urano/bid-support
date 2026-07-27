@@ -54,8 +54,8 @@ export default function Home() {
                 管理メニュー
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <Link href="/tenders" className="bg-white overflow-hidden rounded-xl border border-slate-200 shadow-xs hover:border-indigo-300 hover:shadow-md transition-all flex flex-col justify-between group">
-                  <FeatureThumbnail src="/images/features/tender-research-ai.png" alt="入札案件を調査するAIのイメージ" />
+                <Link href="/bids" className="bg-white overflow-hidden rounded-xl border border-slate-200 shadow-xs hover:border-indigo-300 hover:shadow-md transition-all flex flex-col justify-between group">
+                  <FeatureThumbnail src="/images/features/bid-research-ai.png" alt="入札案件を調査するAIのイメージ" />
                   <div className="p-6 pt-5 flex flex-1 flex-col justify-between">
                   <div className="space-y-3">
                     <div className="w-10 h-10 bg-indigo-50 text-indigo-700 rounded-lg flex items-center justify-center font-bold">
@@ -139,8 +139,8 @@ export default function Home() {
                 ３つの機能
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <Link href="/tenders" className="bg-white overflow-hidden rounded-xl border border-slate-200 shadow-xs hover:border-blue-300 hover:shadow-md transition-all flex flex-col justify-between group">
-                  <FeatureThumbnail src="/images/features/tender-research-ai.png" alt="入札案件を調査するAIのイメージ" />
+                <Link href="/bids" className="bg-white overflow-hidden rounded-xl border border-slate-200 shadow-xs hover:border-blue-300 hover:shadow-md transition-all flex flex-col justify-between group">
+                  <FeatureThumbnail src="/images/features/bid-research-ai.png" alt="入札案件を調査するAIのイメージ" />
                   <div className="p-6 pt-5 flex flex-1 flex-col justify-between">
                   <div className="space-y-3">
                     <div className="w-10 h-10 bg-blue-100 text-blue-700 rounded-lg flex items-center justify-center font-bold">

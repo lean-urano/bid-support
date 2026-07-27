@@ -52,7 +52,7 @@ type ContractorRag = {
   content: string;
 };
 
-type SelectedTender = {
+type SelectedBid = {
   id: number;
   title: string;
   agency: string;
@@ -63,7 +63,7 @@ type SelectedTender = {
   categoryTag?: string;
 };
 
-const DEFAULT_SELECTED_TENDER: SelectedTender = {
+const DEFAULT_SELECTED_BID: SelectedBid = {
   id: 1,
   title: "○○市民ホール大規模改修建築工事",
   agency: "○○市 建築課",
@@ -265,15 +265,15 @@ export default function ContractorsPage() {
   const [step, setStep] = useState<1 | 2 | 3 | 4 | "result">(1);
 
   // 案件調査AIで選択された案件を受け取る
-  const [selectedTender, setSelectedTender] = useState<SelectedTender>(DEFAULT_SELECTED_TENDER);
+  const [selectedBid, setSelectedBid] = useState<SelectedBid>(DEFAULT_SELECTED_BID);
 
   useEffect(() => {
-    const savedTender = window.sessionStorage.getItem("selectedTenderForNegotiation");
-    if (!savedTender) return;
+    const savedBid = window.sessionStorage.getItem("selectedBidForNegotiation");
+    if (!savedBid) return;
     try {
-      setSelectedTender(JSON.parse(savedTender) as SelectedTender);
+      setSelectedBid(JSON.parse(savedBid) as SelectedBid);
     } catch {
-      window.sessionStorage.removeItem("selectedTenderForNegotiation");
+      window.sessionStorage.removeItem("selectedBidForNegotiation");
     }
   }, []);
 
@@ -354,8 +354,8 @@ export default function ContractorsPage() {
       const drafts: Record<string | number, string> = {};
 
       selectedContractors.forEach(contractor => {
-        const tenderBrief = selectedTender
-          ? `【対象案件】\n案件名：${selectedTender.title}\n発注機関：${selectedTender.agency}\n対象地域：${selectedTender.location}\n予定価格：${selectedTender.budget || "未定"}\n工事概要：${selectedTender.description || "詳細情報はありません。"}\n`
+        const bidBrief = selectedBid
+          ? `【対象案件】\n案件名：${selectedBid.title}\n発注機関：${selectedBid.agency}\n対象地域：${selectedBid.location}\n予定価格：${selectedBid.budget || "未定"}\n工事概要：${selectedBid.description || "詳細情報はありません。"}\n`
           : "【対象案件】\n案件調査AIから選択された公共工事案件について\n";
 
         let purposeText = "";
@@ -374,20 +374,20 @@ export default function ContractorsPage() {
           : "";
 
         const letter = `お世話になっております。
-テンダー建設の施工管理部と申します。
+ビッド建設の施工管理部と申します。
 
 貴社の実績や得意分野（${contractor.specialties.join(", ")}）を拝見し、弊社が現在入札を進めております案件について、ぜひご相談・打診をさせていただきたくご連絡差し上げました。
 
-${tenderBrief}
+${bidBrief}
 ${freeTextBrief}
 ${purposeText}
 
 何卒ご検討のほど、よろしくお願い申し上げます。
 
 ----------------------------
-テンダー建設株式会社 担当
-E-mail: contact@tender-construction.co.jp
-URL: https://tender-construction.co.jp
+ビッド建設株式会社 担当
+E-mail: contact@bid-construction.co.jp
+URL: https://bid-construction.co.jp
 ----------------------------`;
         
         drafts[contractor.id] = letter;
@@ -743,14 +743,14 @@ URL: https://tender-construction.co.jp
                         <span className="font-bold text-blue-700">AIおすすめ案件</span>
                       </div>
                       <div>
-                        <h3 className="text-base font-extrabold text-slate-900">{selectedTender.title}</h3>
-                        <p className="mt-1 font-semibold text-slate-600">発注機関：{selectedTender.agency}　/　対象地域：{selectedTender.location}</p>
+                        <h3 className="text-base font-extrabold text-slate-900">{selectedBid.title}</h3>
+                        <p className="mt-1 font-semibold text-slate-600">発注機関：{selectedBid.agency}　/　対象地域：{selectedBid.location}</p>
                       </div>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 rounded-xl border border-blue-100 bg-white p-3.5">
-                        <div><span className="block text-[10px] font-bold text-slate-400">予定価格・予算</span><span className="font-bold text-slate-800">{selectedTender.budget || "未定"}</span></div>
-                        <div><span className="block text-[10px] font-bold text-slate-400">開札予定日</span><span className="font-bold text-slate-800">{selectedTender.openDate}</span></div>
+                        <div><span className="block text-[10px] font-bold text-slate-400">予定価格・予算</span><span className="font-bold text-slate-800">{selectedBid.budget || "未定"}</span></div>
+                        <div><span className="block text-[10px] font-bold text-slate-400">開札予定日</span><span className="font-bold text-slate-800">{selectedBid.openDate}</span></div>
                       </div>
-                      <div><span className="block text-[10px] font-bold text-slate-400">工事内容・要件概要</span><p className="mt-1.5 rounded-xl border border-blue-100 bg-white p-3 text-slate-700 leading-relaxed">{selectedTender.description || "詳細情報はありません。"}</p></div>
+                      <div><span className="block text-[10px] font-bold text-slate-400">工事内容・要件概要</span><p className="mt-1.5 rounded-xl border border-blue-100 bg-white p-3 text-slate-700 leading-relaxed">{selectedBid.description || "詳細情報はありません。"}</p></div>
                     </div>
 
                     <div className="pt-4 border-t border-slate-100 flex justify-end">
@@ -937,8 +937,8 @@ URL: https://tender-construction.co.jp
 
                       <div>
                         <span className="block text-[10px] font-bold text-slate-400 uppercase">2. 引き継ぎ案件:</span>
-                        <p className="mt-1 font-bold text-slate-800">{selectedTender?.title || "案件が選択されていません"}</p>
-                        {selectedTender && <p className="mt-1.5 text-slate-600 text-[11px] leading-relaxed bg-white p-2.5 border border-slate-200 rounded-xl">{selectedTender.agency} / {selectedTender.location} / {selectedTender.budget || "予算未定"}</p>}
+                        <p className="mt-1 font-bold text-slate-800">{selectedBid?.title || "案件が選択されていません"}</p>
+                        {selectedBid && <p className="mt-1.5 text-slate-600 text-[11px] leading-relaxed bg-white p-2.5 border border-slate-200 rounded-xl">{selectedBid.agency} / {selectedBid.location} / {selectedBid.budget || "予算未定"}</p>}
                       </div>
 
                       <div>

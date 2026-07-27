@@ -1,5 +1,5 @@
 {
-  "name": "tender-support",
+  "name": "bid-support",
   "private": true,
   "scripts": {
     "dev": "npm --prefix frontend run dev -- -p 4325",

@@ -11,7 +11,7 @@ interface MirrorUser {
 }
 
 const mirrorSsoUrl = process.env.NEXT_PUBLIC_MIRROR_SSO_URL ?? "http://localhost:4000";
-const EMBED_CLIENT_ID = "tender-support";
+const EMBED_CLIENT_ID = "bid-support";
 
 export default function LoginPage() {
   const [user, setUser] = useState<MirrorUser | null>(null);
@@ -48,7 +48,7 @@ export default function LoginPage() {
     };
   }, []);
 
-  const startTenderSupportSession = () => {
+  const startBidSupportSession = () => {
     const requestedPath = new URLSearchParams(window.location.search).get("returnTo");
     const returnTo = requestedPath?.startsWith("/") && !requestedPath.startsWith("//") ? requestedPath : "/";
     window.location.assign(`/api/auth/login?returnTo=${encodeURIComponent(returnTo)}`);
@@ -89,7 +89,7 @@ export default function LoginPage() {
               </div>
               <button
                 type="button"
-                onClick={startTenderSupportSession}
+                onClick={startBidSupportSession}
                 className="mt-6 w-full flex justify-center items-center gap-2 py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 transition-all cursor-pointer"
               >
                 公共工事サポートに入る

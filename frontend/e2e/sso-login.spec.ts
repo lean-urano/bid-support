@@ -5,7 +5,7 @@ const USER_EMAIL = process.env.E2E_SSO_USER_EMAIL ?? "alice@example.com";
 const USER_PASSWORD = process.env.E2E_SSO_USER_PASSWORD ?? "alicepass";
 
 // 管理者: MIRROR SSOを使わずメール・パスワードでログインする専用アカウント(backend/seed.py)
-const ADMIN_EMAIL = process.env.E2E_ADMIN_EMAIL ?? "admin@tender-support.jp";
+const ADMIN_EMAIL = process.env.E2E_ADMIN_EMAIL ?? "admin@bid-support.jp";
 const ADMIN_PASSWORD = process.env.E2E_ADMIN_PASSWORD ?? "admin1234";
 
 async function loginAsUserViaMirrorSso(page: import("@playwright/test").Page) {

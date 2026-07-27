@@ -12,7 +12,7 @@ async function seed() {
     // ロールを割り当てておく。実際のユーザーレコードはSSOログイン時にsso-syncで作成される。
     { email: "alice@example.com", name: "Alice(SSO)", password_hash: null, role: "user" },
     // 管理者はSSOを使わずメール・パスワードでログインする(/admin/login)。開発用の固定パスワード。
-    { email: "admin@tender-support.jp", name: "管理者", password_hash: await bcrypt.hash("admin1234", 10), role: "admin" },
+    { email: "admin@bid-support.jp", name: "管理者", password_hash: await bcrypt.hash("admin1234", 10), role: "admin" },
   ];
 
   for (const u of users) {

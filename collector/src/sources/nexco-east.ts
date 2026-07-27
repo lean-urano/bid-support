@@ -2,7 +2,7 @@
 // NEXCO東日本 入札公告(受付中案件)。一覧を全ページ取得し、詳細ページのPDF本文もテキスト化する。
 import * as cheerio from "cheerio";
 import { createRateLimiter, downloadPdfText, fetchHtml, sleep } from "../html-crawler.js";
-import { saveTenders, type ScrapedTender } from "../tenders.js";
+import { saveBids, type ScrapedBid } from "../bids.js";
 
 const BASE_URL = "https://www.e-nexco.co.jp";
 const SEARCH_URL = `${BASE_URL}/bids/public_notice/search_service`;
@@ -69,7 +69,7 @@ async function fetchAllPages(): Promise<ListRow[]> {
   return results;
 }
 
-async function fetchDetail(row: ListRow): Promise<ScrapedTender | null> {
+async function fetchDetail(row: ListRow): Promise<ScrapedBid | null> {
   await rateLimit();
   const html = await fetchHtml(row.detailUrl);
   const $ = cheerio.load(html);
@@ -116,29 +116,29 @@ async function fetchDetail(row: ListRow): Promise<ScrapedTender | null> {
   };
 }
 
-async function crawl(): Promise<ScrapedTender[]> {
+async function crawl(): Promise<ScrapedBid[]> {
   console.log("[nexco-east] クロール開始: 受付中案件");
   const rows = await fetchAllPages();
   console.log(`[nexco-east] ${rows.length}件の案件を検出`);
 
-  const tenders: ScrapedTender[] = [];
+  const bids: ScrapedBid[] = [];
   for (const row of rows) {
     try {
-      const tender = await fetchDetail(row);
-      if (tender) tenders.push(tender);
+      const bid = await fetchDetail(row);
+      if (bid) bids.push(bid);
       await sleep(1000);
     } catch (err) {
       console.error(`Detail fetch error ${row.detailUrl}:`, err);
     }
   }
 
-  console.log(`[nexco-east] ${tenders.length}件取得完了`);
-  return tenders;
+  console.log(`[nexco-east] ${bids.length}件取得完了`);
+  return bids;
 }
 
 async function main() {
-  const tenders = await crawl();
-  const { newCount, updatedCount } = await saveTenders(tenders);
+  const bids = await crawl();
+  const { newCount, updatedCount } = await saveBids(bids);
   console.log(`[nexco-east] ${newCount} new, ${updatedCount} updated`);
 }
 

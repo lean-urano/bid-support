@@ -1,7 +1,7 @@
 # ADR 003 — データベーススキーマ設計
 
 **日付**: 2026-06-27
-**ステータス**: 決定済み
+**ステータス**: 決定済み（2026-07-27、[ADR006](006-rename-tender-to-bid.md)でテーブル名`tenders`→`bids`、`tender_favorites`→`bid_favorites`、`tender_recommendations`→`bid_recommendations`に変更。以下の本文は当時の名称のまま残す）
 
 ---
 

@@ -8,9 +8,9 @@ export async function GET() {
     ? NextResponse.redirect(new URL("/admin/login", appOrigin))
     : (() => {
         const issuer = process.env.OIDC_ISSUER_URL ?? "http://localhost:4000";
-        const tenderSupportLoginUrl = process.env.TENDER_SUPPORT_LOGIN_URL ?? "http://localhost:3000/login";
+        const bidSupportLoginUrl = process.env.BID_SUPPORT_LOGIN_URL ?? "http://localhost:3000/login";
         const logoutUrl = new URL("/logout", issuer);
-        logoutUrl.searchParams.set("return_to", tenderSupportLoginUrl);
+        logoutUrl.searchParams.set("return_to", bidSupportLoginUrl);
         return NextResponse.redirect(logoutUrl);
       })();
   response.cookies.set(sessionCookieName, "", { ...authCookieOptions, maxAge: 0 });

@@ -1,5 +1,5 @@
 #!/bin/bash
-cd /var/www/tender-support/collector
+cd /var/www/bid-support/collector
 while true; do
   npm run crawl:nexco-east
   sleep 3600

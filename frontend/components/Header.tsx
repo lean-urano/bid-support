@@ -94,11 +94,11 @@ export default function Header() {
     setShowNotifications(false);
 
     if (item.linkUrl) {
-      if (item.linkUrl.startsWith("tender:")) {
+      if (item.linkUrl.startsWith("bid:")) {
         const id = item.linkUrl.split(":")[1];
-        router.push(`/tenders?id=${id}`);
+        router.push(`/bids?id=${id}`);
       } else if (item.linkUrl === "admin:scraping") {
-        router.push(`/tenders?tab=scraping`);
+        router.push(`/bids?tab=scraping`);
       }
     }
   };
@@ -127,12 +127,12 @@ export default function Header() {
   // ナビリンク定義（管理者 / 一般で分岐）
   const navLinks = isAdmin
     ? [
-        { href: "/tenders",       icon: <Search className="w-5 h-5" />,    label: "調査AI管理",   sub: "Tender AI" },
+        { href: "/bids",          icon: <Search className="w-5 h-5" />,    label: "調査AI管理",   sub: "Bid AI" },
         { href: "/contractors",   icon: <UserCheck className="w-5 h-5" />, label: "交渉AI管理",   sub: "Negotiation AI" },
         { href: "/ai-assistant",  icon: <Bot className="w-5 h-5" />,       label: "法務AI学習",   sub: "Legal AI" },
       ]
     : [
-        { href: "/tenders",       icon: <Search className="w-5 h-5" />,    label: "案件調査AI",   sub: "Tender AI" },
+        { href: "/bids",          icon: <Search className="w-5 h-5" />,    label: "案件調査AI",   sub: "Bid AI" },
         { href: "/contractors",   icon: <UserCheck className="w-5 h-5" />, label: "交渉AI",       sub: "Negotiation AI" },
         { href: "/ai-assistant",  icon: <Bot className="w-5 h-5" />,       label: "秘書AI",       sub: "Secretary AI" },
       ];

@@ -1,8 +1,8 @@
 import * as client from "openid-client";
 
 const issuerUrl = process.env.OIDC_ISSUER_URL ?? "http://localhost:4000";
-const clientId = process.env.OIDC_CLIENT_ID ?? "tender-support";
-const clientSecret = process.env.OIDC_CLIENT_SECRET ?? "tender-support-dev-secret";
+const clientId = process.env.OIDC_CLIENT_ID ?? "bid-support";
+const clientSecret = process.env.OIDC_CLIENT_SECRET ?? "bid-support-dev-secret";
 
 let configuration: Promise<client.Configuration> | undefined;
 

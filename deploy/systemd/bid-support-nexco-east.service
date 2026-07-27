@@ -1,0 +1,15 @@
+[Unit]
+Description=bid-support nexco-east crawler continuous loop
+After=network.target postgresql.service
+
+[Service]
+Type=simple
+ExecStart=/var/www/bid-support/collector/loops/nexco-east.sh
+Restart=always
+RestartSec=10
+User=root
+StandardOutput=append:/var/log/bid-support-nexco-east.log
+StandardError=append:/var/log/bid-support-nexco-east.log
+
+[Install]
+WantedBy=multi-user.target

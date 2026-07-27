@@ -3,7 +3,7 @@
 // (Python版コメントに"real selectors need to be verified against live site"とある通り)。
 import * as cheerio from "cheerio";
 import { createRateLimiter, fetchHtml } from "../html-crawler.js";
-import { saveTenders, type ScrapedTender } from "../tenders.js";
+import { saveBids, type ScrapedBid } from "../bids.js";
 
 const GEPS_BASE = "https://www.geps.go.jp";
 const GEPS_BID_LIST = "https://www.geps.go.jp/info";
@@ -11,8 +11,8 @@ const BID_KEYWORDS = ["公告", "入札", "調達", "案件", "公募", "選定"
 
 const rateLimit = createRateLimiter(1000);
 
-function parseRows($: cheerio.CheerioAPI, baseUrl: string): ScrapedTender[] {
-  const tenders: ScrapedTender[] = [];
+function parseRows($: cheerio.CheerioAPI, baseUrl: string): ScrapedBid[] {
+  const bids: ScrapedBid[] = [];
   $("table.bid-list tr, .procurement-list li, .notice-list .item").each((_, row) => {
     try {
       const linkEl = $(row).find("a").first();
@@ -21,7 +21,7 @@ function parseRows($: cheerio.CheerioAPI, baseUrl: string): ScrapedTender[] {
       const title = linkEl.text().trim();
       if (!title || title.length < 5) return;
 
-      tenders.push({
+      bids.push({
         title,
         organization: "デジタル庁",
         category: null,
@@ -37,11 +37,11 @@ function parseRows($: cheerio.CheerioAPI, baseUrl: string): ScrapedTender[] {
       console.debug("Failed to parse row:", err);
     }
   });
-  return tenders;
+  return bids;
 }
 
-function parseLinksFallback($: cheerio.CheerioAPI, baseUrl: string): ScrapedTender[] {
-  const tenders: ScrapedTender[] = [];
+function parseLinksFallback($: cheerio.CheerioAPI, baseUrl: string): ScrapedBid[] {
+  const bids: ScrapedBid[] = [];
   const seenUrls = new Set<string>();
 
   $("a[href]").each((_, link) => {
@@ -54,7 +54,7 @@ function parseLinksFallback($: cheerio.CheerioAPI, baseUrl: string): ScrapedTend
     if (seenUrls.has(url)) return;
     seenUrls.add(url);
 
-    tenders.push({
+    bids.push({
       title: text,
       organization: "",
       category: null,
@@ -68,25 +68,25 @@ function parseLinksFallback($: cheerio.CheerioAPI, baseUrl: string): ScrapedTend
     });
   });
 
-  return tenders.slice(0, 100);
+  return bids.slice(0, 100);
 }
 
-async function crawl(): Promise<ScrapedTender[]> {
+async function crawl(): Promise<ScrapedBid[]> {
   console.log("[geps] クロール開始");
   await rateLimit();
   const html = await fetchHtml(GEPS_BID_LIST);
   const $ = cheerio.load(html);
 
-  let tenders = parseRows($, GEPS_BID_LIST);
-  if (tenders.length === 0) tenders = parseLinksFallback($, GEPS_BID_LIST);
+  let bids = parseRows($, GEPS_BID_LIST);
+  if (bids.length === 0) bids = parseLinksFallback($, GEPS_BID_LIST);
 
-  console.log(`[geps] ${tenders.length}件取得完了`);
-  return tenders;
+  console.log(`[geps] ${bids.length}件取得完了`);
+  return bids;
 }
 
 async function main() {
-  const tenders = await crawl();
-  const { newCount, updatedCount } = await saveTenders(tenders);
+  const bids = await crawl();
+  const { newCount, updatedCount } = await saveBids(bids);
   console.log(`[geps] ${newCount} new, ${updatedCount} updated`);
 }
 

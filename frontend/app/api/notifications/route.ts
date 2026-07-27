@@ -7,7 +7,7 @@ const initialSeedNotifications = [
     title: "AI高評価案件の検出",
     message: "自社実績と高相性(95点)の「○○市民ホール改修」が登録されました。",
     type: "ai",
-    linkUrl: "tender:1",
+    linkUrl: "bid:1",
     read: false,
   },
   {
