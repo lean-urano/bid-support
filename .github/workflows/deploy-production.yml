@@ -73,5 +73,12 @@ jobs:
           npm --prefix frontend run build
           pm2 reload bid-support-frontend --update-env
           sudo systemctl try-restart bid-support-gifu bid-support-nexco-east
-          curl --fail --silent --show-error http://127.0.0.1:4102/login >/dev/null
+          for attempt in $(seq 1 15); do
+            if curl --fail --silent --show-error http://127.0.0.1:4102/login >/dev/null; then
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "Frontend did not become healthy within 30 seconds" >&2
+          exit 1
           EOF
