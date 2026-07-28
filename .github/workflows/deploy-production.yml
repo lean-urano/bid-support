@@ -90,6 +90,11 @@ jobs:
           set -euo pipefail
           cd /var/www/bid-support
           git pull --ff-only origin main
+          # 収集サービスはリポジトリ外のループスクリプトを実行するため、
+          # デプロイごとに正しいパスの版へ同期する。
+          install -d -m 755 collector/loops
+          install -m 755 deploy/loops/gifu.sh collector/loops/gifu.sh
+          install -m 755 deploy/loops/nexco-east.sh collector/loops/nexco-east.sh
           mv /tmp/.env.production frontend/.env.production
           npm --prefix collector ci
           npm --prefix frontend ci --omit=dev

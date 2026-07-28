@@ -11,7 +11,9 @@ import {
   Bell, 
   LogOut,
   Check,
-  UserCheck
+  UserCheck,
+  UserRound,
+  Settings
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 
@@ -34,6 +36,10 @@ export default function Header() {
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const notificationRef = useRef<HTMLDivElement>(null);
+
+  // プロフィールメニュー
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+  const profileMenuRef = useRef<HTMLDivElement>(null);
 
   // ハンバーガーメニュー
   const [menuOpen, setMenuOpen] = useState(false);
@@ -71,6 +77,16 @@ export default function Header() {
     function handleClickOutside(event: MouseEvent) {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
         setMenuOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target as Node)) {
+        setProfileMenuOpen(false);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
@@ -239,16 +255,57 @@ export default function Header() {
           </div>
 
           <div className="h-8 w-px bg-slate-200"></div>
-          <div className="flex items-center gap-2">
-            <div 
-              title={`${user?.name || ""} (${user?.email || ""})`} 
-              className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-white text-xs ${themeColor}`}
+          <div className="relative" ref={profileMenuRef}>
+            <button
+              type="button"
+              onClick={() => setProfileMenuOpen((open) => !open)}
+              title="プロフィールメニュー"
+              aria-label="プロフィールメニューを開く"
+              aria-expanded={profileMenuOpen}
+              aria-haspopup="menu"
+              className="flex items-center gap-2 rounded-full p-0.5 transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 cursor-pointer"
             >
-              {isAdmin ? "管" : "般"}
-            </div>
-            <button onClick={logout} title="ログアウト" className="p-1.5 text-slate-400 hover:text-red-600 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer">
-              <LogOut className="w-4 h-4" />
+              <span className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-white text-xs ${themeColor}`}>
+                {user?.name?.trim().slice(0, 1) || <UserRound className="w-4 h-4" />}
+              </span>
+              <span className="hidden lg:block max-w-28 truncate text-left text-xs font-semibold text-slate-700">
+                {user?.name || "プロフィール"}
+              </span>
             </button>
+
+            {profileMenuOpen && (
+              <div
+                role="menu"
+                className="absolute right-0 mt-2 w-72 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl z-50 animate-fade-in"
+              >
+                <div className="border-b border-slate-100 bg-slate-50 px-4 py-3">
+                  <p className="truncate text-sm font-bold text-slate-900">{user?.name || "ユーザー"}</p>
+                  <p className="mt-0.5 truncate text-xs text-slate-500">{user?.email}</p>
+                </div>
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={() => setProfileMenuOpen(false)}
+                  className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm font-medium text-slate-700 transition-colors hover:bg-blue-50 hover:text-blue-700 cursor-pointer"
+                >
+                  <Settings className="w-4 h-4" />
+                  <span>
+                    プロフィールを変更
+                    <span className="mt-0.5 block text-[11px] font-normal text-slate-400">MIRRORアカウントで変更できます</span>
+                  </span>
+                </button>
+                <div className="mx-3 h-px bg-slate-100" />
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={logout}
+                  className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm font-medium text-red-600 transition-colors hover:bg-red-50 cursor-pointer"
+                >
+                  <LogOut className="w-4 h-4" />
+                  ログアウト
+                </button>
+              </div>
+            )}
           </div>
 
           {/* ハンバーガーボタン（md未満で表示） */}
