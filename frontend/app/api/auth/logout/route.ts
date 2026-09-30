@@ -6,6 +6,9 @@ export async function GET() {
   const response = session?.sub.startsWith("admin:")
     // 管理者はSSOを経由していないため、そのまま管理者ログイン画面に戻す
     ? NextResponse.redirect(new URL("/admin/login", appOrigin))
+    : session?.sub.startsWith("dev:")
+    // ローカルの仮IDログインもSSOを経由していないため、ログイン画面に戻す
+    ? NextResponse.redirect(new URL("/login", appOrigin))
     : (() => {
         const issuer = process.env.OIDC_ISSUER_URL ?? "http://localhost:4000";
         const bidSupportLoginUrl = process.env.BID_SUPPORT_LOGIN_URL ?? "http://localhost:3000/login";

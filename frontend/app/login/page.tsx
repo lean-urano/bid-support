@@ -12,11 +12,14 @@ interface MirrorUser {
 
 const mirrorSsoUrl = process.env.NEXT_PUBLIC_MIRROR_SSO_URL ?? "http://localhost:4000";
 const EMBED_CLIENT_ID = "bid-support";
+const isDev = process.env.NODE_ENV === "development";
 
 export default function LoginPage() {
   const [user, setUser] = useState<MirrorUser | null>(null);
-  const [checking, setChecking] = useState(true);
+  const [checking, setChecking] = useState(!isDev);
   const [modalOpen, setModalOpen] = useState(false);
+  const [devLoggingIn, setDevLoggingIn] = useState(false);
+  const [devError, setDevError] = useState("");
 
   const checkMirrorSession = async (closeModalWhenAuthenticated = false) => {
     setChecking(true);
@@ -34,6 +37,7 @@ export default function LoginPage() {
   };
 
   useEffect(() => {
+    if (isDev) return;
     const sessionTimer = window.setTimeout(() => { void checkMirrorSession(); }, 0);
 
     const onMessage = (event: MessageEvent<{ type?: string }>) => {
@@ -54,6 +58,24 @@ export default function LoginPage() {
     window.location.assign(`/api/auth/login?returnTo=${encodeURIComponent(returnTo)}`);
   };
 
+  const devLogin = async () => {
+    setDevError("");
+    setDevLoggingIn(true);
+    try {
+      const res = await fetch("/api/auth/dev-login", { method: "POST" });
+      if (!res.ok) {
+        setDevError("仮IDログインに失敗しました");
+        return;
+      }
+      const requestedPath = new URLSearchParams(window.location.search).get("returnTo");
+      const returnTo = requestedPath?.startsWith("/") && !requestedPath.startsWith("//") ? requestedPath : "/";
+      // AuthProviderのセッション取得はマウント時のみのため、フルリロードで遷移する
+      window.location.assign(returnTo);
+    } finally {
+      setDevLoggingIn(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-100 flex flex-col justify-center py-12 sm:px-6 lg:px-8 font-sans">
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
@@ -70,7 +92,22 @@ export default function LoginPage() {
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-white py-8 px-4 shadow-xl sm:rounded-2xl sm:px-10 border border-slate-200/80 text-center">
-          {checking ? (
+          {isDev ? (
+            <>
+              <p className="text-sm text-slate-600 leading-6">
+                ローカル開発用の仮IDでログインします（SSOは使用しません）。
+              </p>
+              <button
+                type="button"
+                onClick={() => { void devLogin(); }}
+                disabled={devLoggingIn}
+                className="mt-6 w-full flex justify-center items-center gap-2 py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 transition-all cursor-pointer disabled:opacity-60"
+              >
+                {devLoggingIn ? "ログイン中..." : "仮IDでログイン"}
+              </button>
+              {devError && <p className="mt-3 text-sm text-red-600">{devError}</p>}
+            </>
+          ) : checking ? (
             <div className="flex items-center justify-center gap-3 text-sm text-slate-500 py-2">
               <span className="w-4 h-4 animate-spin rounded-full border-2 border-blue-600 border-r-transparent" />
               MIRRORアカウントを確認しています
@@ -110,7 +147,7 @@ export default function LoginPage() {
               </button>
             </>
           )}
-          <p className="mt-4 text-[11px] text-slate-400">Secure sign-in via MIRROR</p>
+          {!isDev && <p className="mt-4 text-[11px] text-slate-400">Secure sign-in via MIRROR</p>}
           <Link href="/admin/login" className="mt-3 inline-block text-[11px] text-slate-400 hover:text-slate-600 hover:underline">
             管理者の方はこちら
           </Link>
