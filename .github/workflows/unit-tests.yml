@@ -1,0 +1,69 @@
+name: Unit tests
+
+# DEV FACTORY's merge verification requires the check run "unit-tests" to have
+# succeeded on the PR's exact head SHA. Keep the job name stable.
+#
+# GitHub Actions minutes (billed per started minute, per job):
+# - One job only.
+# - Pull requests only: a merge into main is not re-tested, because its PR
+#   head already passed here.
+# - Draft PRs are skipped until ready_for_review (a draft is not mergeable).
+# - A newer push cancels the run for the older commit.
+# - A change that touches only docs skips install/build inside the job. Never
+#   use a paths filter: a filtered workflow reports no check run and blocks
+#   the merge.
+
+on:
+  workflow_dispatch:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: unit-tests-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  unit-tests:
+    name: unit-tests
+    if: github.event.pull_request.draft != true
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Decide what changed
+        id: scope
+        shell: bash
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+        run: |
+          set -euo pipefail
+          if [ -z "$BASE" ]; then
+            # Manual runs check everything.
+            changed=".github/workflows/unit-tests.yml"
+          else
+            git fetch --quiet --depth=1 origin "$BASE"
+            changed=$(git diff --name-only "$BASE" HEAD)
+          fi
+          code=$(grep -vE '(\.md$|^docs/)' <<< "$changed" || true)
+          printf 'changed (non-doc):\n%s\n' "$code"
+          [ -n "$code" ] && echo "code=true" >> "$GITHUB_OUTPUT" || echo "code=false" >> "$GITHUB_OUTPUT"
+      - uses: actions/setup-node@v4
+        if: steps.scope.outputs.code == 'true'
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install
+        if: steps.scope.outputs.code == 'true'
+        working-directory: frontend
+        run: npm ci
+      - name: Build (includes typecheck)
+        if: steps.scope.outputs.code == 'true'
+        working-directory: frontend
+        run: npm run build
+      - name: Docs-only change
+        if: steps.scope.outputs.code != 'true'
+        run: echo "Only documentation changed; nothing to build or test."
