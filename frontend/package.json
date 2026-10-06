@@ -3,10 +3,14 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "predev": "bash ../scripts/dev-env/deps.sh frontend",
     "dev": "next dev",
+    "prebuild": "bash ../scripts/dev-env/deps.sh frontend",
     "build": "next build",
     "start": "next start",
+    "prelint": "bash ../scripts/dev-env/deps.sh frontend",
     "lint": "eslint",
+    "pree2e": "bash ../scripts/dev-env/deps.sh frontend",
     "e2e": "playwright test"
   },
   "dependencies": {
