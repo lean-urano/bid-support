@@ -3,7 +3,8 @@
 // 各詳細ページの構造化フィールド(工事名・予定価格・締切日等)を抽出する。
 import * as cheerio from "cheerio";
 import { createRateLimiter, downloadPdfText, fetchHtml, sleep } from "../html-crawler.js";
-import { saveBids, type ScrapedBid } from "../bids.js";
+import { findExistingDetailUrls, saveBids, type ScrapedBid } from "../bids.js";
+import { failScraperRun, finishScraperRun, startScraperRun, updateScraperRunProgress } from "../scraper-runs.js";
 
 const BASE_URL = "https://www.pref.gifu.lg.jp";
 const LIST_URL = `${BASE_URL}/bid/search/search.php`;
@@ -41,24 +42,51 @@ function extractArticleId(url: string): string {
   return m ? m[1] : url;
 }
 
-async function fetchList(): Promise<string[]> {
-  await rateLimit();
-  const html = await fetchHtml(LIST_URL);
-  const $ = cheerio.load(html);
-  const urls: string[] = [];
-  const seen = new Set<string>();
+type ListPageHandler = (urls: string[], page: number, lastPage: number) => Promise<void>;
 
-  $("a[href]").each((_, el) => {
-    const href = $(el).attr("href") ?? "";
-    if (/\/bid\/bid\/\d+\.html/.test(href)) {
-      const fullUrl = new URL(href, BASE_URL).toString();
-      if (!seen.has(fullUrl)) {
-        seen.add(fullUrl);
-        urls.push(fullUrl);
+async function fetchList(onPage: ListPageHandler): Promise<number> {
+  const seen = new Set<string>();
+  let discoveredCount = 0;
+
+  // 岐阜県の一覧は1ページ50件で、ページ番号がクエリに付く。
+  // 一覧上の最終ページを先に確認し、1ページ目だけで終了しないようにする。
+  let lastPage = 1;
+  for (let page = 1; page <= lastPage; page += 1) {
+    await rateLimit();
+    const html = await fetchHtml(`${LIST_URL}?page=${page}`);
+    const $ = cheerio.load(html);
+    let pageUrlCount = 0;
+    const pageUrls: string[] = [];
+
+    $("a[href]").each((_, el) => {
+      const href = $(el).attr("href") ?? "";
+      const pageMatch = href.match(/(?:^|[?&])page=(\d+)/);
+      if (pageMatch) lastPage = Math.max(lastPage, Number(pageMatch[1]));
+    });
+
+    $("a[href]").each((_, el) => {
+      const href = $(el).attr("href") ?? "";
+      if (/\/bid\/bid\/\d+\.html/.test(href)) {
+        const fullUrl = new URL(href, BASE_URL).toString();
+        if (!seen.has(fullUrl)) {
+          seen.add(fullUrl);
+          pageUrls.push(fullUrl);
+          pageUrlCount += 1;
+        }
       }
+    });
+
+    console.log(`[gifu] 一覧 ${page}/${lastPage}ページ目: ${pageUrlCount}件`);
+    if (pageUrlCount === 0 && page >= lastPage) break;
+    if (pageUrls.length > 0) {
+      discoveredCount += pageUrls.length;
+      // URLを全ページ分ため込まず、このページを取得した直後に詳細収集へ渡す。
+      await onPage(pageUrls, page, lastPage);
     }
-  });
-  return urls;
+    await sleep(500);
+  }
+
+  return discoveredCount;
 }
 
 async function parseDetail(html: string, url: string): Promise<ScrapedBid | null> {
@@ -103,6 +131,11 @@ async function parseDetail(html: string, url: string): Promise<ScrapedBid | null
   const orgLink = $("#content_header a").first();
   const organization = orgLink.length > 0 ? orgLink.text().trim() : "岐阜県";
   const location = fields.get("工事場所") ?? fields.get("業務場所") ?? null;
+  const requirements = [...fields.entries()]
+    .filter(([key]) => !titleKeys.includes(key) && key !== "工事種別" && key !== "業務種別" && key !== "物品種別")
+    .map(([key, value]) => `${key}: ${value}`)
+    .join("\n")
+    .slice(0, 20000) || null;
 
   const articleId = extractArticleId(url);
   const pdfEntries: Array<{ label: string; url: string }> = [];
@@ -139,6 +172,7 @@ async function parseDetail(html: string, url: string): Promise<ScrapedBid | null
     budgetMax,
     announcedDate,
     deadline,
+    requirements,
     detailUrl: url,
     rawData: {
       prefecture: "21",
@@ -150,32 +184,64 @@ async function parseDetail(html: string, url: string): Promise<ScrapedBid | null
   };
 }
 
-async function crawl(): Promise<ScrapedBid[]> {
+async function crawl(runId: number): Promise<{ successCount: number; failureCount: number }> {
   console.log("[gifu] クロール開始");
-  const detailUrls = await fetchList();
-  console.log(`[gifu] ${detailUrls.length}件の詳細ページを取得`);
+  let successCount = 0;
+  let failureCount = 0;
+  const counterLock = { current: Promise.resolve() };
+  const processPage = async (detailUrls: string[]) => {
+    const existingUrls = await findExistingDetailUrls(detailUrls);
+    const newDetailUrls = detailUrls.filter((url) => !existingUrls.has(url));
+    console.log(`[gifu] 既存${existingUrls.size}件をスキップ、新規${newDetailUrls.length}件を処理`);
 
-  const bids: ScrapedBid[] = [];
-  for (const url of detailUrls) {
-    try {
-      await rateLimit();
-      const html = await fetchHtml(url);
-      const bid = await parseDetail(html, url);
-      if (bid) bids.push(bid);
-    } catch (err) {
-      console.debug(`詳細ページ取得失敗 ${url}:`, err);
+    let nextIndex = 0;
+    const worker = async () => {
+      while (true) {
+        const index = nextIndex++;
+        if (index >= newDetailUrls.length) return;
+        const url = newDetailUrls[index];
+        try {
+          await rateLimit();
+          const html = await fetchHtml(url);
+          const bid = await parseDetail(html, url);
+          if (bid) {
+            // 詳細1件の解析が終わるたびに即時保存する。
+            await saveBids([bid]);
+            successCount += 1;
+          } else {
+            failureCount += 1;
+          }
+        } catch (err) {
+          console.debug(`詳細ページ取得失敗 ${url}:`, err);
+          failureCount += 1;
+        }
+        counterLock.current = counterLock.current.then(() => updateScraperRunProgress(runId, { successCount, failureCount }));
+        await counterLock.current;
+        await sleep(200);
+      }
     }
-    await sleep(200);
-  }
+    await Promise.all(Array.from({ length: 5 }, () => worker()));
+  };
 
-  console.log(`[gifu] ${bids.length}件取得完了`);
-  return bids;
+  const discoveredCount = await fetchList(async (pageUrls, page, lastPage) => {
+    console.log(`[gifu] ${page}/${lastPage}ページ目の詳細を収集開始（${pageUrls.length}件）`);
+    await processPage(pageUrls);
+  });
+
+  console.log(`[gifu] ${discoveredCount}件中、${successCount}件取得完了（失敗${failureCount}件）`);
+  return { successCount, failureCount };
 }
 
 async function main() {
-  const bids = await crawl();
-  const { newCount, updatedCount } = await saveBids(bids);
-  console.log(`[gifu] ${newCount} new, ${updatedCount} updated`);
+  const runId = Number(process.env.SCRAPER_RUN_ID) || await startScraperRun("gifu");
+  try {
+    const result = await crawl(runId);
+    await finishScraperRun(runId, result);
+    console.log(`[gifu] ${result.successCount}件を保存完了`);
+  } catch (err) {
+    await failScraperRun(runId, err);
+    throw err;
+  }
 }
 
 main()
