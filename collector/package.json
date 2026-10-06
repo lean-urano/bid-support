@@ -4,9 +4,13 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "precrawl:geps": "bash ../scripts/dev-env/deps.sh collector",
     "crawl:geps": "tsx src/sources/geps.ts",
+    "precrawl:gifu": "bash ../scripts/dev-env/deps.sh collector",
     "crawl:gifu": "tsx src/sources/gifu.ts",
+    "precrawl:nexco-east": "bash ../scripts/dev-env/deps.sh collector",
     "crawl:nexco-east": "tsx src/sources/nexco-east.ts",
+    "premigrate-legacy-data": "bash ../scripts/dev-env/deps.sh collector",
     "migrate-legacy-data": "tsx src/migrate-legacy-data.ts"
   },
   "dependencies": {

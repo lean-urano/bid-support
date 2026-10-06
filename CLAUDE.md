@@ -110,6 +110,16 @@ npx prisma migrate dev
 
 ---
 
+## worktreeの開発環境（依存）
+
+worktreeを切った後に`npm ci`する手作業は不要。`frontend`の`npm run dev`/`build`/`lint`/`e2e`、`collector`の`crawl:*`、ルートの`db:seed`の`pre*`フックが`scripts/dev-env/deps.sh`を自動で呼ぶ。
+
+- `node_modules`は`~/.cache/bid-support/deps/<frontend|collector|root>/`の中央ストア（`package-lock.json`のhash＋Nodeバージョン＋OS/archがキー。frontendは`prisma/schema.prisma`も含む）からclonefileで丸ごとクローンする（約1秒）。lockfileが同じなら`npm ci`は走らない。symlink共有はNext.js/Turbopackが落ちるので使わない。
+- lockfileはルート・`frontend`・`collector`の3つに分かれる（workspacesではない）ため、パッケージごとに独立したストアを持つ。
+- frontendのPrisma Clientはストア作成時に`npm ci`の後で`prisma generate`する（`npm ci`中にschemaがあると`@prisma/engines`のpostinstallと競合して落ちるため）。
+- `.deps-key`マーカーが無い`node_modules`（手で入れたもの。mainのcheckout等）は触らない。
+- 初回（ストアが空）は`npm ci`が走るので1〜2分かかる。DEV FACTORY Previewの`prepare_argv`は空のままでよく、`start_argv`の`npm run dev`が`predev`経由で用意する。
+
 ## 注意事項・デザインルール
 
 - UIの実装には**すべて Tailwind CSS と shadcn/ui を使用すること**（UIの統一感を保つため）

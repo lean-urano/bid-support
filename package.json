@@ -4,6 +4,7 @@
   "scripts": {
     "dev": "npm --prefix frontend run dev -- -p 4325",
     "dev:db": "docker compose up -d db",
+    "predb:seed": "bash scripts/dev-env/deps.sh root",
     "db:seed": "tsx db/seed.ts"
   },
   "devDependencies": {
