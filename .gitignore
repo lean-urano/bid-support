@@ -11,5 +11,6 @@ test-results/
 collector/legacy_bids.csv
 collector/dist/
 
-# CodeGraph index
+# Tool-generated local state (Serena regenerates project.yml on startup)
 .codegraph/
+.serena/
