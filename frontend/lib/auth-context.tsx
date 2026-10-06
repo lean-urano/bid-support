@@ -46,7 +46,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // (SSOへの遷移はログインフォーム上のボタン押下時のみ行う。ここで直接/api/auth/loginに飛ばすと
     //  SSO未起動時にdiscoveryが失敗してエラー画面になってしまうため避ける)
     // (管理者用の/admin/loginはメール・パスワードの別ログインのためリダイレクト対象から除外する)
-    if (!user && pathname !== "/login" && pathname !== "/admin/login") {
+    if (!user && pathname !== "/login" && pathname !== "/admin/login" && pathname !== "/register") {
       window.location.assign(`/login?returnTo=${encodeURIComponent(pathname)}`);
     }
   }, [user, loading, pathname]);

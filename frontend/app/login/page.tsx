@@ -151,6 +151,12 @@ export default function LoginPage() {
           <Link href="/admin/login" className="mt-3 inline-block text-[11px] text-slate-400 hover:text-slate-600 hover:underline">
             管理者の方はこちら
           </Link>
+          <div className="mt-5 border-t border-slate-100 pt-4 text-xs text-slate-500">
+            はじめてご利用の方は
+            <Link href="/register" className="ml-1 font-bold text-blue-600 hover:text-blue-700 hover:underline">
+              新規企業登録へ
+            </Link>
+          </div>
         </div>
       </div>
 
