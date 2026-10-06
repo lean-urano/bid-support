@@ -10,3 +10,6 @@ postgres_data/
 test-results/
 collector/legacy_bids.csv
 collector/dist/
+
+# CodeGraph index
+.codegraph/
