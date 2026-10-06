@@ -1,8 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
-import { deleteBid, updateBid } from "@/lib/queries/bids";
+import { deleteBid, getBid, updateBid } from "@/lib/queries/bids";
 
 export const runtime = "nodejs";
+
+export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const session = await getSession();
+  if (!session || session.role !== "admin") return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  const { id } = await params;
+  const bid = await getBid(Number(id));
+  if (!bid) return NextResponse.json({ error: "not found" }, { status: 404 });
+  return NextResponse.json({ bid });
+}
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await getSession();

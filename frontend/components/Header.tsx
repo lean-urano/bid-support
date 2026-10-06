@@ -5,7 +5,6 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { 
   Building2, 
-  Bot, 
   Search, 
   ShieldCheck, 
   Bell, 
@@ -16,6 +15,7 @@ import {
   Settings
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
+import AdminHeader from "@/components/AdminHeader";
 
 type NotificationItem = {
   id: number;
@@ -93,6 +93,8 @@ export default function Header() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  if (isAdmin) return <AdminHeader />;
+
   const unreadCount = notifications.filter(n => !n.read).length;
 
   const handleNotificationClick = async (item: NotificationItem) => {
@@ -145,12 +147,10 @@ export default function Header() {
     ? [
         { href: "/bids",          icon: <Search className="w-5 h-5" />,    label: "調査AI管理",   sub: "Bid AI" },
         { href: "/contractors",   icon: <UserCheck className="w-5 h-5" />, label: "交渉AI管理",   sub: "Negotiation AI" },
-        { href: "/ai-assistant",  icon: <Bot className="w-5 h-5" />,       label: "法務AI学習",   sub: "Legal AI" },
       ]
     : [
         { href: "/bids",          icon: <Search className="w-5 h-5" />,    label: "案件調査AI",   sub: "Bid AI" },
         { href: "/contractors",   icon: <UserCheck className="w-5 h-5" />, label: "交渉AI",       sub: "Negotiation AI" },
-        { href: "/ai-assistant",  icon: <Bot className="w-5 h-5" />,       label: "秘書AI",       sub: "Secretary AI" },
       ];
 
   return (

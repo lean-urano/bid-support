@@ -21,10 +21,19 @@ export async function listBids(): Promise<BidRow[]> {
     `SELECT id, title, organization, category, location, budget_min, budget_max,
             announced_date, deadline, requirements, detail_url, source, created_at
      FROM bids
-     ORDER BY created_at DESC
-     LIMIT 500`
+     ORDER BY announced_date DESC NULLS LAST, created_at DESC`
   );
   return rows;
+}
+
+export async function getBid(id: number): Promise<BidRow | null> {
+  const { rows } = await pool.query<BidRow>(
+    `SELECT id, title, organization, category, location, budget_min, budget_max,
+            announced_date, deadline, requirements, detail_url, source, created_at
+     FROM bids WHERE id = $1`,
+    [id]
+  );
+  return rows[0] ?? null;
 }
 
 export interface CreateBidInput {

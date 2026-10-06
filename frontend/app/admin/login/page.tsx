@@ -1,13 +1,21 @@
 "use client";
 
 import { useState } from "react";
-import { Building2, Lock, Mail, ShieldCheck } from "lucide-react";
+import { Building2, Lock, Mail, MousePointerClick, ShieldCheck } from "lucide-react";
 
 export default function AdminLoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [demoCredentialsFilled, setDemoCredentialsFilled] = useState(false);
+
+  function fillDemoAdminCredentials() {
+    setEmail("admin@bid-support.jp");
+    setPassword("admin1234");
+    setDemoCredentialsFilled(true);
+    setError("");
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -26,7 +34,7 @@ export default function AdminLoginPage() {
       }
       // AuthProviderのセッション再取得はマウント時の1回だけなので、client-side navigationではなく
       // フルリロードで遷移してAuthProviderを再マウントさせる
-      window.location.assign("/");
+      window.location.assign("/admin");
     } finally {
       setLoading(false);
     }
@@ -95,6 +103,27 @@ export default function AdminLoginPage() {
               {loading ? "ログイン中..." : "ログインする"}
             </button>
           </form>
+
+          {process.env.NODE_ENV === "development" && (
+            <div className="mt-6 border-t border-slate-200 pt-5">
+              <p className="mb-3 text-center text-[10px] font-bold uppercase tracking-widest text-slate-500">
+                開発用クイック入力（1クリック）
+              </p>
+              <button
+                type="button"
+                onClick={fillDemoAdminCredentials}
+                className="flex w-full items-center justify-center gap-2 rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-2.5 text-xs font-bold text-indigo-700 transition-colors hover:bg-indigo-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+              >
+                <MousePointerClick className="h-4 w-4" />
+                管理者アカウントを入力
+              </button>
+              {demoCredentialsFilled && (
+                <p className="mt-2 text-center text-xs font-medium text-emerald-700" role="status">
+                  開発用管理者アカウントを入力しました。ログインするを押してください。
+                </p>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -415,7 +415,7 @@ URL: https://bid-construction.co.jp
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans relative">
       {/* 共通ナビゲーションヘッダー */}
-      <Header />
+      {!isAdmin && <Header />}
 
       {/* トースト表示 */}
       {toastMsg && (
