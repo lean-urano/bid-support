@@ -123,3 +123,17 @@ CREATE INDEX IF NOT EXISTS idx_company_licenses_company_id ON company_licenses (
 CREATE INDEX IF NOT EXISTS idx_company_achievements_company_id ON company_achievements (company_id);
 
 CREATE UNIQUE INDEX IF NOT EXISTS uq_bids_detail_url ON bids (detail_url);
+
+-- 企業情報入力（資格証・実績書類のアップロード＋AI解析によるフォーム自動反映）
+CREATE TABLE IF NOT EXISTS company_documents (
+    id SERIAL PRIMARY KEY,
+    company_id INTEGER NOT NULL REFERENCES company_profile(id) ON DELETE CASCADE,
+    uploaded_by INTEGER REFERENCES users(id),
+    original_filename VARCHAR(300) NOT NULL,
+    stored_path VARCHAR(500) NOT NULL,
+    mime_type VARCHAR(100),
+    file_size INTEGER,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_company_documents_company_id ON company_documents (company_id);
