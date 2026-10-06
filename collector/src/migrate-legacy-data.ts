@@ -96,7 +96,9 @@ function mapRow(row: LegacyBidRow): {
   detailUrl: string;
   rawData: Record<string, unknown>;
 } {
-  const location = [row.prefecture, row.city].filter(Boolean).join(" ") || null;
+  // 旧DBの都道府県はJIS X 0401コードで保存されていたため、表示用の名称へ変換する。
+  const prefecture = row.prefecture === "21" ? "岐阜県" : row.prefecture;
+  const location = [prefecture, row.city].filter(Boolean).join(" ") || null;
 
   let pdfUrls: unknown = null;
   try {

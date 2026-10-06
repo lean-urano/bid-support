@@ -137,3 +137,27 @@ CREATE TABLE IF NOT EXISTS company_documents (
 );
 
 CREATE INDEX IF NOT EXISTS idx_company_documents_company_id ON company_documents (company_id);
+
+CREATE TABLE IF NOT EXISTS scraper_runs (
+    id BIGSERIAL PRIMARY KEY,
+    source_key VARCHAR(50) NOT NULL,
+    started_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    finished_at TIMESTAMPTZ,
+    status VARCHAR(20) NOT NULL DEFAULT 'running' CHECK (status IN ('running', 'success', 'failed')),
+    process_id BIGINT,
+    success_count INTEGER NOT NULL DEFAULT 0,
+    failure_count INTEGER NOT NULL DEFAULT 0,
+    error_message TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_scraper_runs_source_started ON scraper_runs (source_key, started_at DESC);
+
+CREATE TABLE IF NOT EXISTS scraper_sources (
+    source_key VARCHAR(50) PRIMARY KEY,
+    enabled BOOLEAN NOT NULL DEFAULT true,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+INSERT INTO scraper_sources (source_key) VALUES
+    ('gifu'), ('nexco-east'), ('geps')
+ON CONFLICT (source_key) DO NOTHING;

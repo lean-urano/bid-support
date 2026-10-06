@@ -3,6 +3,7 @@
 import * as cheerio from "cheerio";
 import { createRateLimiter, downloadPdfText, fetchHtml, sleep } from "../html-crawler.js";
 import { saveBids, type ScrapedBid } from "../bids.js";
+import { failScraperRun, finishScraperRun, startScraperRun } from "../scraper-runs.js";
 
 const BASE_URL = "https://www.e-nexco.co.jp";
 const SEARCH_URL = `${BASE_URL}/bids/public_notice/search_service`;
@@ -137,9 +138,16 @@ async function crawl(): Promise<ScrapedBid[]> {
 }
 
 async function main() {
-  const bids = await crawl();
-  const { newCount, updatedCount } = await saveBids(bids);
-  console.log(`[nexco-east] ${newCount} new, ${updatedCount} updated`);
+  const runId = Number(process.env.SCRAPER_RUN_ID) || await startScraperRun("nexco-east");
+  try {
+    const bids = await crawl();
+    const { newCount, updatedCount } = await saveBids(bids);
+    await finishScraperRun(runId, { successCount: bids.length, failureCount: 0 });
+    console.log(`[nexco-east] ${newCount} new, ${updatedCount} updated`);
+  } catch (err) {
+    await failScraperRun(runId, err);
+    throw err;
+  }
 }
 
 main()

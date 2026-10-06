@@ -4,6 +4,7 @@
 import * as cheerio from "cheerio";
 import { createRateLimiter, fetchHtml } from "../html-crawler.js";
 import { saveBids, type ScrapedBid } from "../bids.js";
+import { failScraperRun, finishScraperRun, startScraperRun } from "../scraper-runs.js";
 
 const GEPS_BASE = "https://www.geps.go.jp";
 const GEPS_BID_LIST = "https://www.geps.go.jp/info";
@@ -85,9 +86,16 @@ async function crawl(): Promise<ScrapedBid[]> {
 }
 
 async function main() {
-  const bids = await crawl();
-  const { newCount, updatedCount } = await saveBids(bids);
-  console.log(`[geps] ${newCount} new, ${updatedCount} updated`);
+  const runId = Number(process.env.SCRAPER_RUN_ID) || await startScraperRun("geps");
+  try {
+    const bids = await crawl();
+    const { newCount, updatedCount } = await saveBids(bids);
+    await finishScraperRun(runId, { successCount: bids.length, failureCount: 0 });
+    console.log(`[geps] ${newCount} new, ${updatedCount} updated`);
+  } catch (err) {
+    await failScraperRun(runId, err);
+    throw err;
+  }
 }
 
 main()
