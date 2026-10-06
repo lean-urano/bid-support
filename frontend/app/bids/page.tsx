@@ -51,7 +51,7 @@ function rowToBid(row: BidRow): Bid {
     id: row.id,
     title: row.title,
     agency: row.organization,
-    location: row.location ?? "",
+    location: row.location?.trim() === "21" ? "岐阜県" : row.location ?? "",
     openDate: row.deadline ?? "",
     budget: row.budget_max ? `${Number(row.budget_max).toLocaleString()}円` : undefined,
     description: row.requirements ?? undefined,
@@ -62,6 +62,11 @@ function rowToBid(row: BidRow): Bid {
 function parseBudgetText(text: string): number | null {
   const digits = text.replace(/[^0-9]/g, "");
   return digits ? Number(digits) : null;
+}
+
+function formatOpenDate(value: string): { date: string; time: string } {
+  const [date, time] = value.split("T");
+  return { date: date ?? "", time: time ? time.slice(0, 5) : "" };
 }
 
 export default function BidsPage() {
@@ -362,28 +367,28 @@ export default function BidsPage() {
                   </div>
                 </div>
 
-                <div className="overflow-x-auto border border-slate-100 rounded-xl">
-                  <table className="w-full text-left text-xs text-slate-600">
+                <div className="overflow-x-auto border border-slate-100 rounded-xl" aria-label="登録済み入札物件マスター一覧。横にスクロールして全列を表示できます。">
+                  <table className="w-full min-w-[900px] text-left text-xs text-slate-600">
                     <thead className="bg-slate-50 text-slate-700 font-bold uppercase border-b border-slate-200">
                       <tr>
-                        <th className="p-3">ID</th>
-                        <th className="p-3">案件名 / 工事名称</th>
-                        <th className="p-3">発注機関 / 地域</th>
-                        <th className="p-3">工種カテゴリ</th>
-                        <th className="p-3">開札予定日</th>
-                        <th className="p-3 text-right">操作</th>
+                        <th className="p-3 whitespace-nowrap">ID</th>
+                        <th className="min-w-80 p-3">案件名 / 工事名称</th>
+                        <th className="min-w-60 p-3">発注機関 / 地域</th>
+                        <th className="min-w-44 p-3 whitespace-nowrap">工種カテゴリ</th>
+                        <th className="min-w-28 p-3 whitespace-nowrap">開札予定日</th>
+                        <th className="p-3 text-right whitespace-nowrap">操作</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-200">
                       {filteredBids.map(t => (
-                        <tr key={t.id} className="hover:bg-slate-50 transition-colors">
-                          <td className="p-3 font-mono text-slate-400">#{t.id}</td>
-                          <td className="p-3 font-semibold text-slate-900">{t.title}</td>
-                          <td className="p-3">{t.agency} ({t.location})</td>
-                          <td className="p-3">
+                        <tr key={t.id} className="hover:bg-slate-50 transition-colors align-middle">
+                          <td className="p-3 font-mono text-slate-400 whitespace-nowrap">#{t.id}</td>
+                          <td className="min-w-80 p-3 font-semibold leading-5 text-slate-900">{t.title}</td>
+                          <td className="min-w-60 p-3 leading-5">{t.agency} ({t.location})</td>
+                          <td className="min-w-44 p-3 whitespace-nowrap">
                             <span className="px-2 py-0.5 bg-slate-100 text-slate-700 rounded text-[10px] font-semibold">{t.categoryTag}</span>
                           </td>
-                          <td className="p-3">{t.openDate}</td>
+                          <td className="min-w-28 p-3 whitespace-nowrap">{t.openDate}</td>
                           <td className="p-3 text-right space-x-1 whitespace-nowrap">
                             <button onClick={() => setViewingBid(t)} className="px-2 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded font-bold transition-colors cursor-pointer">
                               詳細
@@ -490,16 +495,16 @@ export default function BidsPage() {
                 </select>
               </div>
 
-              <div className="overflow-x-auto border border-slate-100 rounded-xl">
-                <table className="w-full text-left text-xs text-slate-600">
+              <div className="overflow-x-auto border border-slate-100 rounded-xl" aria-label="公開中の入札物件一覧。横にスクロールして全列を表示できます。">
+                <table className="table-fixed w-full min-w-[1140px] text-left text-xs text-slate-600">
                   <thead className="bg-slate-50 text-slate-700 font-bold uppercase border-b border-slate-200">
                     <tr>
-                      <th className="py-3 px-6">案件名</th>
-                      <th className="py-3 px-4">発注機関</th>
-                      <th className="py-3 px-4">地域</th>
-                      <th className="py-3 px-4">AI自社おすすめ度 (動的計算)</th>
-                      <th className="py-3 px-4">開札予定日</th>
-                      <th className="py-3 px-4 text-right">詳細</th>
+                      <th className="w-[530px] py-3 px-6">案件名</th>
+                      <th className="w-[160px] py-3 px-4">発注機関</th>
+                      <th className="w-[90px] py-3 px-4 whitespace-nowrap">地域</th>
+                      <th className="w-[150px] py-3 px-4 whitespace-nowrap">評価</th>
+                      <th className="w-[120px] py-3 px-4 whitespace-nowrap">開札予定日</th>
+                      <th className="w-[90px] py-3 px-4 whitespace-nowrap">詳細</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
@@ -510,20 +515,24 @@ export default function BidsPage() {
                     ) : (
                       filteredBids.map(t => {
                         const aiRec = getAiUserRecommendation(t.id);
+                        const openDate = formatOpenDate(t.openDate);
                         return (
-                          <tr key={t.id} className="hover:bg-slate-50 transition-colors">
-                            <td className="py-4 px-6 font-semibold text-slate-900">{t.title}</td>
-                            <td className="py-4 px-4">{t.agency}</td>
-                            <td className="py-4 px-4">{t.location}</td>
-                            <td className="py-4 px-4">
+                          <tr key={t.id} className="hover:bg-slate-50 transition-colors align-middle">
+                            <td className="py-4 px-6 font-semibold leading-5 text-slate-900">{t.title}</td>
+                            <td className="py-4 px-4 leading-5 truncate">{t.agency}</td>
+                            <td className="py-4 px-4 whitespace-nowrap">{t.location}</td>
+                            <td className="py-4 px-4 whitespace-nowrap">
                               <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold ${
                                 aiRec.score >= 90 ? "bg-emerald-100 text-emerald-800" : "bg-blue-100 text-blue-800"
                               }`} title={aiRec.reason}>
                                 <Sparkles className="w-3 h-3 text-amber-500" /> {aiRec.score}点 ({aiRec.label})
                               </span>
                             </td>
-                            <td className="py-4 px-4">{t.openDate}</td>
-                            <td className="py-4 px-4 text-right">
+                            <td className="py-4 px-4 whitespace-nowrap leading-5">
+                              <div>{openDate.date}</div>
+                              <div className="text-slate-400">{openDate.time}</div>
+                            </td>
+                            <td className="py-4 px-4 whitespace-nowrap">
                               <button onClick={() => setViewingBid(t)} className="text-xs font-bold px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-all cursor-pointer">
                                 閲覧
                               </button>
