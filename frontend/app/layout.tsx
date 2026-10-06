@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
+import Script from "next/script";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/lib/auth-context";
@@ -35,6 +36,7 @@ export default function RootLayout({
           <WorkspaceUrlSync />
         </Suspense>
         <AuthProvider>{children}</AuthProvider>
+        <Script src="/preview-bridge.js" strategy="afterInteractive" />
       </body>
     </html>
   );
