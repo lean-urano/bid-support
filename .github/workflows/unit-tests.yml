@@ -64,6 +64,10 @@ jobs:
         if: steps.scope.outputs.code == 'true'
         working-directory: frontend
         run: npm run build
+      - name: Unit tests
+        if: steps.scope.outputs.code == 'true'
+        working-directory: frontend
+        run: npm test
       - name: Docs-only change
         if: steps.scope.outputs.code != 'true'
         run: echo "Only documentation changed; nothing to build or test."
