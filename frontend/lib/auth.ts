@@ -60,13 +60,7 @@ export function safeReturnTo(value: string | null) {
   return value && value.startsWith("/") && !value.startsWith("//") ? value : "/";
 }
 
-export const secureCookie = process.env.NODE_ENV === "production";
-
-// Partitioned は Secure 必須。HTTP のローカル開発ではCookieを保存できなくなるため、
-// 本番HTTPSのみCHIPSを有効にする。SameSite=Noneでも同一サイト要求は送信される。
-export const authCookieOptions = secureCookie
-  ? { httpOnly: true, sameSite: "none" as const, secure: true, partitioned: true, path: "/" }
-  : { httpOnly: true, sameSite: "lax" as const, secure: false, path: "/" };
+export { authCookieOptions } from "./auth-cookie";
 
 // request.urlはNext.jsがNodeの生のreq.url(パスのみ)からoriginを補完する際、
 // リバースプロキシ配下だとlocalhost:<内部ポート>を使ってしまうことがあるため、
