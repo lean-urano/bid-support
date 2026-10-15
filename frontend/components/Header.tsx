@@ -2,15 +2,13 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { 
   Building2, 
-  Search, 
   ShieldCheck, 
   Bell, 
   LogOut,
   Check,
-  UserCheck,
   UserRound,
   Settings
 } from "lucide-react";
@@ -29,7 +27,6 @@ type NotificationItem = {
 
 export default function Header() {
   const { user, logout } = useAuth();
-  const pathname = usePathname();
   const router = useRouter();
   const isAdmin = user?.role === "admin";
 
@@ -40,10 +37,6 @@ export default function Header() {
   // プロフィールメニュー
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
-
-  // ハンバーガーメニュー
-  const [menuOpen, setMenuOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
 
   const fetchNotifications = async () => {
     try {
@@ -71,16 +64,6 @@ export default function Header() {
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, []);
-
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setMenuOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   useEffect(() => {
@@ -139,19 +122,6 @@ export default function Header() {
 
   // テーマカラー設定
   const themeColor = isAdmin ? "bg-indigo-600" : "bg-blue-600";
-  const hoverColor = isAdmin ? "hover:text-indigo-600" : "hover:text-blue-600";
-  const activeColor = isAdmin ? "text-indigo-600 font-bold" : "text-blue-600 font-bold";
-
-  // ナビリンク定義（管理者 / 一般で分岐）
-  const navLinks = isAdmin
-    ? [
-        { href: "/bids",          icon: <Search className="w-5 h-5" />,    label: "調査AI管理",   sub: "Bid AI" },
-        { href: "/contractors",   icon: <UserCheck className="w-5 h-5" />, label: "交渉AI管理",   sub: "Negotiation AI" },
-      ]
-    : [
-        { href: "/bids",          icon: <Search className="w-5 h-5" />,    label: "案件調査AI",   sub: "Bid AI" },
-        { href: "/contractors",   icon: <UserCheck className="w-5 h-5" />, label: "交渉AI",       sub: "Negotiation AI" },
-      ];
 
   return (
     <header className="sticky top-0 z-40 bg-white border-b border-slate-200 shadow-xs">
@@ -172,26 +142,6 @@ export default function Header() {
             </span>
           </Link>
         </div>
-
-        {/* ナビゲーションメニュー（md以上で表示） */}
-        <nav className="hidden md:flex items-center gap-6 lg:gap-8 text-slate-600">
-          {navLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              title={link.label}
-              className={`group flex flex-col items-center justify-center py-1 transition-colors ${
-                pathname === link.href ? activeColor : `text-slate-600 ${hoverColor}`
-              }`}
-            >
-              <span className="group-hover:scale-110 transition-transform">{link.icon}</span>
-              <span className="text-[10px] font-bold mt-0.5 leading-none">{link.label}</span>
-              <span className={`text-[8px] font-semibold text-slate-400 mt-0.5 uppercase tracking-wider ${
-                isAdmin ? "group-hover:text-indigo-400" : "group-hover:text-blue-400"
-              } transition-colors`}>{link.sub}</span>
-            </Link>
-          ))}
-        </nav>
 
         {/* 右側アクションエリア */}
         <div className="flex items-center gap-3 relative">
@@ -304,46 +254,6 @@ export default function Header() {
                   <LogOut className="w-4 h-4" />
                   ログアウト
                 </button>
-              </div>
-            )}
-          </div>
-
-          {/* ハンバーガーボタン（md未満で表示） */}
-          <div className="md:hidden relative" ref={menuRef}>
-            <button
-              onClick={() => setMenuOpen(!menuOpen)}
-              className="p-2 text-slate-500 hover:text-slate-700 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
-              title="メニュー"
-              aria-label="メニューを開く"
-            >
-              <div className="w-5 h-5 flex flex-col justify-center gap-[5px]">
-                <span className={`block h-0.5 bg-current rounded-full transition-all duration-200 origin-center ${menuOpen ? "rotate-45 translate-y-[7px]" : ""}`} />
-                <span className={`block h-0.5 bg-current rounded-full transition-all duration-200 ${menuOpen ? "opacity-0 scale-x-0" : ""}`} />
-                <span className={`block h-0.5 bg-current rounded-full transition-all duration-200 origin-center ${menuOpen ? "-rotate-45 -translate-y-[7px]" : ""}`} />
-              </div>
-            </button>
-
-            {/* ドロップダウンメニュー */}
-            {menuOpen && (
-              <div className="absolute right-0 top-full mt-2 w-52 bg-white rounded-2xl shadow-2xl border border-slate-200 z-50 overflow-hidden animate-fade-in">
-                {navLinks.map((link) => (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    onClick={() => setMenuOpen(false)}
-                    className={`flex items-center gap-3 px-4 py-3 transition-colors ${
-                      pathname === link.href
-                        ? `${isAdmin ? "bg-indigo-50 text-indigo-600" : "bg-blue-50 text-blue-600"} font-bold`
-                        : `text-slate-600 ${isAdmin ? "hover:bg-indigo-50 hover:text-indigo-600" : "hover:bg-blue-50 hover:text-blue-600"}`
-                    }`}
-                  >
-                    <span className="shrink-0">{link.icon}</span>
-                    <div>
-                      <div className="text-sm font-semibold leading-none">{link.label}</div>
-                      <div className="text-[10px] text-slate-400 uppercase tracking-wider mt-0.5">{link.sub}</div>
-                    </div>
-                  </Link>
-                ))}
               </div>
             )}
           </div>
