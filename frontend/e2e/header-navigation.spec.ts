@@ -35,6 +35,17 @@ for (const role of ["user", "admin"] as const) {
       // トップページのカードによる導線は維持する。
       await expect(page.locator('main a[href="/bids"]')).toBeVisible();
       await expect(page.locator('main a[href="/contractors"]')).toBeVisible();
+      // カードの枠だけでは画像の読み込み成功を証明できない。
+      const thumbnails = page.locator("main img");
+      await expect(thumbnails).toHaveCount(2);
+      for (const image of await thumbnails.all()) {
+        await image.scrollIntoViewIfNeeded();
+        await expect(image).toBeVisible();
+        await expect.poll(() => image.evaluate((element: HTMLImageElement) =>
+          element.complete && element.naturalWidth > 0
+        ), { timeout: 10_000 }).toBe(true);
+      }
+      await page.evaluate(() => window.scrollTo(0, 0));
       if (process.env.HEADER_SCREENSHOT_DIR) {
         await page.screenshot({ path: path.join(process.env.HEADER_SCREENSHOT_DIR, `${role}-${width}.png`), fullPage: true });
       }
